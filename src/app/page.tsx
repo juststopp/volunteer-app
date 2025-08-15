@@ -7,7 +7,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
 export default function HomePage() {
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const router = useRouter();
 
   useEffect(() => {
@@ -39,7 +39,7 @@ export default function HomePage() {
           </Link>
           <Link href="/auth/signup">
             <Button variant="outline" size="lg">
-              S'inscrire
+              S&apos;inscrire
             </Button>
           </Link>
         </div>

@@ -41,6 +41,7 @@ export function SignInForm() {
       }
     } catch (error) {
       setError("Une erreur s'est produite");
+      console.log(error);
     } finally {
       setIsLoading(false);
     }
@@ -84,7 +85,7 @@ export function SignInForm() {
         <div className="mt-4 text-center text-sm">
           Pas encore de compte ?{" "}
           <Link href="/auth/signup" className="text-blue-600 hover:underline">
-            S'inscrire
+            S&apos;inscrire
           </Link>
         </div>
       </CardContent>

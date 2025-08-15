@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -55,6 +56,7 @@ export function SignUpForm() {
         }
       } catch (error) {
         setError("Erreur lors du chargement des pôles");
+        console.log(error);
       } finally {
         setIsLoadingPoles(false);
       }
@@ -104,6 +106,7 @@ export function SignUpForm() {
       }
     } catch (error) {
       setError("Une erreur s'est produite");
+      console.log(error);
     } finally {
       setIsLoading(false);
     }
@@ -114,7 +117,7 @@ export function SignUpForm() {
       <CardHeader className="space-y-1">
         <CardTitle className="text-2xl font-bold">Inscription</CardTitle>
         <CardDescription>
-          Créez un compte pour accéder à l'application
+          Créez un compte pour accéder à l&apos;application
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -170,7 +173,7 @@ export function SignUpForm() {
               <SelectContent>
                 {poles.map((pole) => (
                   <SelectItem key={pole.id} value={pole.id}>
-                    <img
+                    <Image
                       src={pole.image.url}
                       alt={pole.name}
                       width={50}

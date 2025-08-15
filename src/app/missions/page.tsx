@@ -1,6 +1,6 @@
 "use client";
 
-import { useSession, signOut } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
@@ -62,7 +62,9 @@ export default function DashboardPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Statistiques</CardTitle>
-                <CardDescription>Vos données d'utilisation</CardDescription>
+                <CardDescription>
+                  Vos données d&apos;utilisation
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-blue-600">0</div>

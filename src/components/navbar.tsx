@@ -30,9 +30,9 @@ const Navbar = () => {
   }
 
   return (
-    <div className="min-h-auto bg-gray-50 p-6">
+    <div className="min-h-auto p-6">
       <div className="max-w-4xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
+        <div className="flex justify-between items-center">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">{name}</h1>
             <p className="text-gray-600 mt-1">
@@ -49,7 +49,7 @@ const Navbar = () => {
           </Button>
 
           <Button
-            variant="outline"
+            variant="destructive"
             onClick={() => signOut({ callbackUrl: "/" })}
           >
             Se déconnecter

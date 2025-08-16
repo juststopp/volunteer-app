@@ -8,6 +8,7 @@ export const authOptions: NextAuthOptions = {
     adapter: PrismaAdapter(prisma),
     session: {
         strategy: "jwt",
+        maxAge: 24 * 60 * 60, // 24 hours
     },
     providers: [
         CredentialsProvider({
@@ -42,6 +43,7 @@ export const authOptions: NextAuthOptions = {
 
                 return {
                     id: user.id,
+                    airtableId: user.airtableId,
                     email: user.email,
                     name: user.firstname + " " + user.lastname,
                 }
@@ -62,6 +64,14 @@ export const authOptions: NextAuthOptions = {
             if (token && session && session.user) {
                 session.user.id = token.id as string
             }
+
+            const user = await prisma.user.findUnique({
+                where: {
+                    id: session.user.id
+                }
+            })
+
+            session.user.airtableId = user?.airtableId || null
             return session
         },
     },

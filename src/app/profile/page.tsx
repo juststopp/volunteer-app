@@ -5,14 +5,6 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
 import { Navbar } from "@/components/navbar";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 
 export default function ProfilePage() {
   const { data: session, status } = useSession();
@@ -38,41 +30,6 @@ export default function ProfilePage() {
   return (
     <>
       <Navbar />
-      <div className="min-h-[775px] p-6">
-        <div className="max-w-10xl mx-auto">
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            <Card>
-              <CardHeader>
-                <CardTitle>Profil</CardTitle>
-                <CardDescription>Informations de votre compte</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  <p>
-                    <strong>Nom:</strong> {session.user?.name}
-                  </p>
-                  <p>
-                    <strong>Email:</strong> {session.user?.email}
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Statistiques</CardTitle>
-                <CardDescription>
-                  Vos données d&apos;utilisation
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-blue-600">0</div>
-                <p className="text-sm text-gray-600">Actions effectuées</p>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </div>
     </>
   );
 }

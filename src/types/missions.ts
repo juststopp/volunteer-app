@@ -1,3 +1,8 @@
+export interface UserInscrit {
+    id: string[]
+    name: string
+}
+
 export interface Mission {
     id: string
     mission: string
@@ -13,4 +18,6 @@ export interface Mission {
     priorite: string
     etat: string
     tacheRealisee: string
+    usersInscrits?: UserInscrit[]
+    usersCompleted?: UserInscrit[]
 }

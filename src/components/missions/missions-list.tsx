@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
 import { Mission } from "@/types/missions";
 import { MissionCard } from "./mission-card";
 import { Input } from "@/components/ui/input";
@@ -14,6 +15,8 @@ import {
 import { Search, Filter } from "lucide-react";
 
 export function MissionsList() {
+  const { data: session } = useSession();
+
   const [missions, setMissions] = useState<Mission[]>([]);
   const [filteredMissions, setFilteredMissions] = useState<Mission[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -77,14 +80,6 @@ export function MissionsList() {
     setFilteredMissions(filtered);
   }, [missions, searchTerm, etatFilter, typeFilter, prioriteFilter]);
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <div className="text-lg text-gray-600">Chargement des missions...</div>
-      </div>
-    );
-  }
-
   if (error) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -120,7 +115,7 @@ export function MissionsList() {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-screen p-10">
       <div className="flex flex-col lg:flex-row gap-4">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -178,7 +173,7 @@ export function MissionsList() {
         </div>
       </div>
 
-      {filteredMissions.length === 0 ? (
+      {isLoading === false && filteredMissions.length === 0 ? (
         <div className="text-center py-12">
           <div className="text-gray-500 text-lg">Aucune mission trouvée</div>
           {searchTerm ||
@@ -206,11 +201,23 @@ export function MissionsList() {
             </div>
           </div>
 
-          <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-            {filteredMissions.map((mission) => (
-              <MissionCard key={mission.id} mission={mission} />
-            ))}
-          </div>
+          {isLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="text-lg text-gray-600">
+                Chargement des missions...
+              </div>
+            </div>
+          ) : (
+            <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+              {filteredMissions.map((mission) => (
+                <MissionCard
+                  key={mission.id}
+                  mission={mission}
+                  currentUser={session?.user}
+                />
+              ))}
+            </div>
+          )}
         </>
       )}
     </div>

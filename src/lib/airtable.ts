@@ -76,6 +76,7 @@ export const airtableService = {
                 email: record.fields['Adresse email'] as string,
                 phone: record.fields['Téléphone'] as string,
                 inscriptions: record.fields['Inscriptions'] as string[] || [],
+                points: record.fields['Points TRIBU Cumulés'] as number || 0,
             }
         } catch (error) {
             console.error('Erreur lors de la récupération de l\'utilisateur:', error)
@@ -124,11 +125,14 @@ export const airtableService = {
 
                             const userName = await this.getUserName(userId)
                             return {
-                                id: userId,
+                                id: userId[0],
                                 name: userName
                             }
                         } catch {
-                            return 'Utilisateur inconnu'
+                            return {
+                                id: 'Utilisateur inconnu',
+                                name: 'Utilisateur inconnu'
+                            }
                         }
                     })
                 )
@@ -207,7 +211,10 @@ export const airtableService = {
                         const userName = await this.getUserName(userId)
                         return userName
                     } catch {
-                        return 'Utilisateur inconnu'
+                        return {
+                            id: 'Utilisateur inconnu',
+                            name: 'Utilisateur inconnu'
+                        }
                     }
                 })
             )

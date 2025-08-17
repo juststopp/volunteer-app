@@ -1,8 +1,11 @@
+import CredentialsProvider from "next-auth/providers/credentials"
+import bcrypt from "bcryptjs"
+
 import { NextAuthOptions } from "next-auth"
 import { PrismaAdapter } from "@auth/prisma-adapter"
-import CredentialsProvider from "next-auth/providers/credentials"
+
 import { prisma } from "./db"
-import bcrypt from "bcryptjs"
+import { airtableService } from "./airtable"
 
 export const authOptions: NextAuthOptions = {
     adapter: PrismaAdapter(prisma),
@@ -41,9 +44,15 @@ export const authOptions: NextAuthOptions = {
                     return null
                 }
 
+                const airtableUser = await airtableService.getUser(user.airtableId as string);
+                if (!airtableUser) {
+                    return null;
+                }
+
                 return {
                     id: user.id,
                     airtableId: user.airtableId,
+                    validated: airtableUser.compteValide,
                     email: user.email,
                     name: user.firstname + " " + user.lastname,
                 }
@@ -71,7 +80,10 @@ export const authOptions: NextAuthOptions = {
                 }
             })
 
+            const airtableUser = await airtableService.getUser(user?.airtableId as string);
+
             session.user.airtableId = user?.airtableId || null
+            session.user.validated = airtableUser.compteValide || false
             return session
         },
     },

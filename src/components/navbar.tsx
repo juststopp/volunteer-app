@@ -36,6 +36,11 @@ const Navbar = () => {
     return null;
   }
 
+  if (session.user.validated === false) {
+    router.push("/auth/non-validated");
+    return null;
+  }
+
   const handleNavigation = (path: string) => {
     router.push(path);
     setIsMobileMenuOpen(false);

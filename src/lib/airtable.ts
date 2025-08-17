@@ -77,6 +77,7 @@ export const airtableService = {
                 phone: record.fields['Téléphone'] as string,
                 inscriptions: record.fields['Inscriptions'] as string[] || [],
                 points: record.fields['Points TRIBU Cumulés'] as number || 0,
+                compteValide: record.fields['Compte validé'] as boolean || false,
             }
         } catch (error) {
             console.error('Erreur lors de la récupération de l\'utilisateur:', error)

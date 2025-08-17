@@ -48,7 +48,7 @@ export default function AccountPending() {
               ⏱️ Délai habituel : 24-48 heures
             </p>
             <p className="text-xs text-red-600/80">
-              En cas d'urgence, contactez directement notre support
+              En cas d&apos;urgence, contactez directement notre support
             </p>
           </div>
 

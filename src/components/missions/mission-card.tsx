@@ -122,9 +122,10 @@ export function MissionCard({ mission, currentUser }: MissionCardProps) {
         return user.id.find((id) => id === currentUser?.airtableId);
       })
     : null;
+
   const userCompleted = currentUser?.airtableId
     ? mission.usersCompleted?.find((user) => {
-        return user.id.find((id) => id === currentUser?.airtableId);
+        return user === currentUser?.airtableId;
       })
     : null;
 

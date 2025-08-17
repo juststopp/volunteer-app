@@ -19,5 +19,5 @@ export interface Mission {
     etat: string
     tacheRealisee: string
     usersInscrits?: UserInscrit[]
-    usersCompleted?: UserInscrit[]
+    usersCompleted?: String[]
 }

@@ -133,6 +133,18 @@ export const airtableService = {
                     })
                 )
 
+                const realisationsIds = record.fields['Réalisations'] as string[] || []
+                const usersCompleted = await Promise.all(
+                    realisationsIds.map(async (realisationId) => {
+                        try {
+                            const realisationRecord = await base(process.env.AIRTABLE_REALISATIONS_TABLE!).find(realisationId)
+                            return (realisationRecord.fields['Nom'] as string[])[0] as string
+                        } catch {
+                            return 'Utilisateur inconnu'
+                        }
+                    })
+                )
+
                 const referantIds = record.fields['Référant de mission'] as string[] || []
                 const referantNoms = await Promise.all(
                     referantIds.map(async (referantId) => {
@@ -152,6 +164,7 @@ export const airtableService = {
                     pole: poleNames,
                     referant: referantNoms,
                     usersInscrits,
+                    usersCompleted,
                     dureeEstimee: record.fields['Durée Estimée'] as number,
                     pointsTribu: record.fields['Points TRIBU'] as number,
                     nombrePersonnes: record.fields['Nombre de personnes'] as number,
@@ -204,10 +217,7 @@ export const airtableService = {
                 realisationsIds.map(async (realisationId) => {
                     try {
                         const realisationRecord = await base(process.env.AIRTABLE_REALISATIONS_TABLE!).find(realisationId)
-                        const userId = realisationRecord.fields['Nom'] as string
-
-                        const userName = await this.getUserName(userId)
-                        return userName
+                        return (realisationRecord.fields['Nom'] as string[])[0] as string
                     } catch {
                         return 'Utilisateur inconnu'
                     }

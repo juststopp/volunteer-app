@@ -1,3 +1,4 @@
+// @ts-expect-error we need this to extend the NextAuth session type
 import NextAuth from "next-auth";
 
 declare module "next-auth" {

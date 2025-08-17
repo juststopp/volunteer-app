@@ -39,6 +39,7 @@ export function MissionsList() {
         }
       } catch (error) {
         setError("Erreur lors du chargement des missions");
+        console.log(error);
       } finally {
         setIsLoading(false);
       }

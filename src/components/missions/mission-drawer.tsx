@@ -43,25 +43,6 @@ interface MissionDrawerProps {
   children: React.ReactNode;
 }
 
-const getEtatColor = (etat: string) => {
-  if (etat?.includes("Recherche"))
-    return "bg-blue-100 text-blue-800 border-blue-200";
-  if (etat?.includes("En cours"))
-    return "bg-orange-100 text-orange-800 border-orange-200";
-  if (etat?.includes("Terminé"))
-    return "bg-green-100 text-green-800 border-green-200";
-  if (etat?.includes("Annulé")) return "bg-red-100 text-red-800 border-red-200";
-  return "bg-gray-100 text-gray-800 border-gray-200";
-};
-
-const getPrioriteColor = (priorite: string) => {
-  if (priorite?.includes("🔴")) return "bg-red-500 text-white";
-  if (priorite?.includes("🟠")) return "bg-orange-500 text-white";
-  if (priorite?.includes("🟡")) return "bg-yellow-500 text-white";
-  if (priorite?.includes("🟢")) return "bg-green-500 text-white";
-  return "bg-gray-500 text-white";
-};
-
 const getTypeMissionColor = (type: string) => {
   if (type === "Ponctuelle")
     return "bg-purple-100 text-purple-800 border-purple-200";

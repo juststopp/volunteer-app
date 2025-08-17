@@ -23,7 +23,6 @@ import {
   Clock,
   Target,
   Users,
-  Award,
 } from "lucide-react";
 
 import { Navbar } from "@/components/navbar";
@@ -228,11 +227,6 @@ export default function ProfilePage() {
     return "bg-gray-500 text-white";
   };
 
-  const totalPointsEarned = completedMissions.reduce(
-    (total, mission) => total + (mission.pointsTribu || 0),
-    0
-  );
-
   if (status === "loading") {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -334,7 +328,7 @@ export default function ProfilePage() {
                       {inscriptions.length === 0 ? (
                         <div className="text-center py-8 text-gray-500">
                           <Users className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                          <p>Vous n'êtes inscrit à aucune mission</p>
+                          <p>Vous n&apos;êtes inscrit à aucune mission</p>
                         </div>
                       ) : (
                         <div className="space-y-4">
@@ -426,7 +420,7 @@ export default function ProfilePage() {
                       {completedMissions.length === 0 ? (
                         <div className="text-center py-8 text-gray-500">
                           <CheckCircle2 className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                          <p>Vous n'avez encore complété aucune mission</p>
+                          <p>Vous n&apos;avez encore complété aucune mission</p>
                         </div>
                       ) : (
                         <div className="space-y-4">

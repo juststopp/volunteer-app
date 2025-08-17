@@ -3,30 +3,34 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { airtableService } from '@/lib/airtable';
 
+interface Params {
+    userId: string;
+}
+
 export async function GET(
     request: NextRequest,
-    { params }: { params: { userId: string } }
+    { params }: { params: Promise<Params> }
 ) {
     try {
-        params = await params;
+        const waitedParams = await params;
         const session = await getServerSession(authOptions);
 
         if (!session) {
             return NextResponse.json({ error: 'Non authentifié' }, { status: 401 });
         }
 
-        if (session.user.airtableId !== params.userId) {
+        if (session.user.airtableId !== waitedParams.userId) {
             return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });
         }
 
         const missions = await airtableService.getMissions();
 
         const userInscriptions = missions.filter(mission =>
-            mission.usersInscrits?.some(user => user.id === params.userId) && !mission.usersCompleted?.includes(params.userId)
+            mission.usersInscrits?.some(user => user.id === waitedParams.userId) && !mission.usersCompleted?.includes(waitedParams.userId)
         );
 
         const userCompletedMissions = missions.filter(mission =>
-            mission.usersCompleted?.includes(params.userId)
+            mission.usersCompleted?.includes(waitedParams.userId)
         );
 
         return NextResponse.json({

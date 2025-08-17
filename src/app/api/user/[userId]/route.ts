@@ -3,23 +3,27 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { airtableService } from '@/lib/airtable';
 
+interface Params {
+    userId: string;
+}
+
 export async function GET(
     request: NextRequest,
-    { params }: { params: { userId: string } }
+    { params }: { params: Promise<Params> }
 ) {
     try {
-        params = await params;
+        const waitedParams = await params;
         const session = await getServerSession(authOptions);
 
         if (!session) {
             return NextResponse.json({ error: 'Non authentifié' }, { status: 401 });
         }
 
-        if (session.user.airtableId !== params.userId) {
+        if (session.user.airtableId !== waitedParams.userId) {
             return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });
         }
 
-        const userData = await airtableService.getUser(params.userId);
+        const userData = await airtableService.getUser(waitedParams.userId);
 
         return NextResponse.json(userData);
     } catch (error) {

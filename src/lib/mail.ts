@@ -5,7 +5,7 @@ import { generatePasswordResetEmailHtml } from "@/components/mails/password-rese
 const transporter = Nodemailer.createTransport({
   host: process.env.SMTP_HOST,
   port: Number(process.env.SMTP_PORT),
-  secure: false,
+  secure: true,
   auth: {
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASSWORD,
@@ -23,7 +23,7 @@ export async function sendResetPasswordMail(options: {
     prenom: options.to.name,
     email: options.to.email,
     emailSupport: "contact@sheva.fr",
-    resetUrl: `${process.env.NEXTAUTH_URL}/auth/password-reset?token=${options.resetToken}`
+    resetUrl: `${process.env.NEXTAUTH_URL}/auth/reset-password?token=${options.resetToken}`
   });
 
   const mailOptions = {

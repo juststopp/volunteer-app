@@ -3,11 +3,11 @@ import bcrypt from "bcryptjs"
 
 import { NextAuthOptions } from "next-auth"
 import { PrismaAdapter } from "@auth/prisma-adapter"
-import { SecureUniqueForge } from "unique-forge"
 
 import { prisma } from "./db"
 import { airtableService } from "./airtable"
 import { sendResetPasswordMail } from "./mail"
+import { randomBytes } from "crypto"
 
 export const authOptions: NextAuthOptions = {
     adapter: PrismaAdapter(prisma),
@@ -100,8 +100,7 @@ export async function resetPassword(email: string) {
         throw new Error("Aucun utilisateur trouvé avec cet email");
     }
 
-    const forge = new SecureUniqueForge();
-    const resetToken = forge.generate() as string;
+    const resetToken = randomBytes(32).toString("hex");
     const resetTokenExpiry = new Date(Date.now() + 3600000);
 
     await prisma.user.updateMany({

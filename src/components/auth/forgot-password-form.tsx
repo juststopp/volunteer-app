@@ -36,7 +36,7 @@ export function ForgotPasswordForm() {
       const data = await response.json();
 
       if (!response.ok) {
-        setError(data.error || "Une erreur s'est produite");
+        setError(data.message || "Une erreur s'est produite");
       } else {
         setSuccess(true);
       }

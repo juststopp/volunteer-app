@@ -48,8 +48,9 @@ model User {
   sessions         Session[]
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
-  resetToken       String?
-  resetTokenExpiry DateTime?
+  resetToken              String?
+  resetTokenExpiry        DateTime?
+  validationEmailSentAt   DateTime?
 }
 
 model VerificationToken {

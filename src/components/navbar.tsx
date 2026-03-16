@@ -73,8 +73,8 @@ const Navbar = () => {
               Missions
             </Button>
 
-            <Button variant="ghost" onClick={() => router.push("/profile")}>
-              Profile
+            <Button variant="ghost" onClick={() => router.push("/profil")}>
+              Profil
             </Button>
 
             <Button
@@ -116,10 +116,10 @@ const Navbar = () => {
 
               <Button
                 variant="ghost"
-                onClick={() => handleNavigation("/profile")}
+                onClick={() => handleNavigation("/profil")}
                 className="justify-start py-3 px-4 text-left hover:bg-gray-50"
               >
-                Profile
+                Profil
               </Button>
 
               <div className="border-t border-gray-100 pt-3">

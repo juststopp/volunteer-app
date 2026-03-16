@@ -122,11 +122,11 @@ export const airtableService = {
                     inscriptionIds.map(async (inscriptionId) => {
                         try {
                             const inscriptionRecord = await base(process.env.AIRTABLE_INSCRIPTIONS_TABLE!).find(inscriptionId)
-                            const userId = inscriptionRecord.fields['Nom'] as string
+                            const userId = (inscriptionRecord.fields['Nom'] as string[])?.[0]
 
                             const userName = await this.getUserName(userId)
                             return {
-                                id: userId[0],
+                                id: userId,
                                 name: userName
                             }
                         } catch {

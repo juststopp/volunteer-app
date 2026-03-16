@@ -16,6 +16,17 @@ interface MissionCardProps {
   currentUser?: Session["user"];
 }
 
+const stripMarkdown = (text: string) =>
+  text
+    .replace(/#{1,6}\s+/g, "")
+    .replace(/\*\*(.+?)\*\*/g, "$1")
+    .replace(/\*(.+?)\*/g, "$1")
+    .replace(/`(.+?)`/g, "$1")
+    .replace(/\[(.+?)\]\(.+?\)/g, "$1")
+    .replace(/^[-*+]\s+/gm, "")
+    .replace(/\n+/g, " ")
+    .trim();
+
 const getEtatColor = (etat: string) => {
   if (etat?.includes("Recherche"))
     return "bg-blue-100 text-blue-800 border-blue-200";
@@ -51,7 +62,7 @@ export function MissionCard({ mission, currentUser }: MissionCardProps) {
                 {mission.mission}
               </CardTitle>
               <CardDescription className="line-clamp-2 text-sm">
-                {mission.description}
+                {stripMarkdown(mission.description ?? "")}
               </CardDescription>
             </div>
             <div className="flex flex-col gap-2 flex-shrink-0">

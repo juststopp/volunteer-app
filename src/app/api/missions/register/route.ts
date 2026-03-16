@@ -31,6 +31,15 @@ export async function POST(req: NextRequest) {
             )
         }
 
+        const mission = await airtableService.getMission(missionId)
+
+        if (mission.dateMission && new Date(mission.dateMission) < new Date()) {
+            return NextResponse.json(
+                { message: "La date de la mission est passée" },
+                { status: 400 }
+            )
+        }
+
         await airtableService.inscrireMission(missionId, userId, commentaire)
         return NextResponse.json(
             { message: "Inscription réussie" },

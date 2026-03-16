@@ -1,6 +1,7 @@
 import { Mission } from "@/types/missions";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import ReactMarkdown from "react-markdown";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import {
@@ -91,7 +92,6 @@ export function MissionDrawer({
   const isDatePassed = mission.dateMission
     ? new Date(mission.dateMission) < new Date()
     : false;
-  const isFull = mission.nombreInscrits >= mission.nombrePersonnes;
   const userInscrit = currentUser?.airtableId
     ? mission.usersInscrits?.find((user) => {
         return user.id === currentUser?.airtableId;
@@ -125,6 +125,9 @@ export function MissionDrawer({
       if (response.ok) {
         setIsInscrit(true);
         toast.success("Vous êtes inscrit à la mission !");
+      } else {
+        const data = await response.json();
+        toast.error(data.message ?? "Erreur lors de l'inscription à la mission.");
       }
     } catch (error) {
       console.error("Erreur lors de l'inscription à la mission:", error);
@@ -195,13 +198,6 @@ export function MissionDrawer({
       }
     } else {
       if (!userInscrit && !isInscrit) {
-        if (isFull) {
-          return {
-            text: "Mission complète",
-            variant: "outline" as const,
-            disabled: true,
-          };
-        }
         return {
           text: "S'inscrire à la mission",
           variant: "default" as const,
@@ -232,8 +228,10 @@ export function MissionDrawer({
               {mission.mission}
             </DrawerTitle>
             <div className="sm:w-2/3 w-full">
-              <DrawerDescription className="text-left leading-relaxed sm:line-clamp-3">
-                {mission.description}
+              <DrawerDescription asChild>
+                <div className="text-left leading-relaxed prose prose-sm max-w-none text-muted-foreground">
+                  <ReactMarkdown>{mission.description}</ReactMarkdown>
+                </div>
               </DrawerDescription>
             </div>
           </DrawerHeader>

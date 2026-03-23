@@ -74,8 +74,10 @@ export function MissionDrawer({
   children,
 }: MissionDrawerProps) {
   const [isInscrit, setIsInscrit] = useState(false);
+  const [isDesinscrit, setIsDesinscrit] = useState(false);
   const [hasParticipated, setHasParticipated] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isDesinscritDialogOpen, setIsDesinscritDialogOpen] = useState(false);
 
   const isDatePassed = mission.date
     ? new Date(mission.date) < new Date()
@@ -112,6 +114,29 @@ export function MissionDrawer({
     } catch (error) {
       console.error("Erreur lors de l'inscription à la mission:", error);
       toast.error("Erreur lors de l'inscription à la mission.");
+    }
+  };
+
+  const handleDesinscription = async () => {
+    setIsDesinscritDialogOpen(false);
+    try {
+      const response = await fetch("/api/missions/register", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ missionId: mission.id }),
+      });
+
+      if (response.ok) {
+        setIsDesinscrit(true);
+        setIsInscrit(false);
+        toast.success("Vous avez été désinscrit de la mission.");
+      } else {
+        const data = await response.json();
+        toast.error(data.message ?? "Erreur lors de la désinscription.");
+      }
+    } catch (error) {
+      console.error("Erreur lors de la désinscription:", error);
+      toast.error("Erreur lors de la désinscription.");
     }
   };
 
@@ -173,7 +198,8 @@ export function MissionDrawer({
         };
       }
     } else {
-      if (!userInscrit && !isInscrit) {
+      const effectivelyRegistered = (userInscrit || isInscrit) && !isDesinscrit;
+      if (!effectivelyRegistered) {
         return {
           text: "S'inscrire à la mission",
           variant: "default" as const,
@@ -320,7 +346,51 @@ export function MissionDrawer({
 
             <Separator />
 
-            {buttonConfig.disabled === true && (
+            {(() => {
+              const effectivelyRegistered = (userInscrit || isInscrit) && !isDesinscrit;
+              if (!isDatePassed && effectivelyRegistered) {
+                return (
+                  <div className="flex gap-3">
+                    <Button
+                      className="flex-1 bg-green-50 border-green-200 text-green-700"
+                      variant="outline"
+                      disabled
+                    >
+                      Inscrit à la mission
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="text-red-600 border-red-200 hover:bg-red-50"
+                      onClick={() => setIsDesinscritDialogOpen(true)}
+                    >
+                      Se désinscrire
+                    </Button>
+                  </div>
+                );
+              }
+              return null;
+            })()}
+
+            <Dialog open={isDesinscritDialogOpen} onOpenChange={setIsDesinscritDialogOpen}>
+              <DialogContent className="sm:max-w-[400px]">
+                <DialogHeader>
+                  <DialogTitle>Se désinscrire</DialogTitle>
+                  <DialogDescription>
+                    Êtes-vous sûr de vouloir vous désinscrire de la mission <strong>{mission.title}</strong> ?
+                  </DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                  <DialogClose asChild>
+                    <Button variant="outline">Annuler</Button>
+                  </DialogClose>
+                  <Button variant="destructive" onClick={handleDesinscription}>
+                    Se désinscrire
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+
+            {buttonConfig.disabled === true && !(!isDatePassed && (userInscrit || isInscrit) && !isDesinscrit) && (
               <div className="flex gap-3">
                 <Button
                   className={`flex-1 ${buttonConfig.className || ""}`}
@@ -334,7 +404,7 @@ export function MissionDrawer({
 
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
-                {buttonConfig.disabled === false && (
+                {buttonConfig.disabled === false && !(!isDatePassed && (userInscrit || isInscrit) && !isDesinscrit) && (
                   <div className="flex gap-3">
                     <Button
                       className={`flex-1 ${buttonConfig.className || ""}`}

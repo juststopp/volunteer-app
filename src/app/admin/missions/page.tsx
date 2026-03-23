@@ -21,10 +21,20 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
-import { Plus, Pencil, Trash2, Search, Users, Calendar } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Users, Calendar, UserCheck } from "lucide-react";
 import { toast } from "sonner";
 
 interface Pole { id: string; name: string }
+
+interface Participant {
+    id: string;
+    firstname: string;
+    lastname: string;
+    email: string;
+    phone: string | null;
+    inscribedAt: string;
+    completed: boolean;
+}
 
 interface Mission {
     id: string;
@@ -76,6 +86,9 @@ export default function AdminMissionsPage() {
     const [deleteTarget, setDeleteTarget] = useState<Mission | null>(null);
     const [form, setForm] = useState(emptyForm);
     const [saving, setSaving] = useState(false);
+    const [participantsMission, setParticipantsMission] = useState<Mission | null>(null);
+    const [participants, setParticipants] = useState<Participant[]>([]);
+    const [participantsLoading, setParticipantsLoading] = useState(false);
 
     const fetchMissions = () =>
         fetch("/api/admin/missions")
@@ -169,6 +182,19 @@ export default function AdminMissionsPage() {
     const setField = (key: keyof typeof emptyForm, value: string) =>
         setForm((f) => ({ ...f, [key]: value }));
 
+    const openParticipants = async (mission: Mission) => {
+        setParticipantsMission(mission);
+        setParticipantsLoading(true);
+        setParticipants([]);
+        try {
+            const res = await fetch(`/api/admin/missions/${mission.id}/participants`);
+            const data = await res.json();
+            setParticipants(data);
+        } finally {
+            setParticipantsLoading(false);
+        }
+    };
+
     return (
         <div className="p-8">
             <div className="flex items-center justify-between mb-6">
@@ -243,6 +269,15 @@ export default function AdminMissionsPage() {
                                     </td>
                                     <td className="px-4 py-3">
                                         <div className="flex items-center gap-2">
+                                            <Button
+                                                size="sm"
+                                                variant="outline"
+                                                className="text-xs text-blue-600 border-blue-200 hover:bg-blue-50"
+                                                onClick={() => openParticipants(mission)}
+                                                title="Voir les participants"
+                                            >
+                                                <Users className="w-3 h-3" />
+                                            </Button>
                                             <Button
                                                 size="sm"
                                                 variant="outline"
@@ -381,6 +416,76 @@ export default function AdminMissionsPage() {
                         <Button onClick={handleSave} disabled={saving}>
                             {saving ? "Enregistrement..." : editTarget ? "Enregistrer" : "Créer"}
                         </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Dialog participants */}
+            <Dialog open={!!participantsMission} onOpenChange={() => setParticipantsMission(null)}>
+                <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <Users className="w-5 h-5" />
+                            Participants — {participantsMission?.title}
+                        </DialogTitle>
+                        <DialogDescription>
+                            {participantsMission?._count.inscriptions} inscription(s) sur {participantsMission?.maxPeople ?? "∞"} places
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    {participantsLoading ? (
+                        <div className="space-y-2 py-4">
+                            {[...Array(3)].map((_, i) => (
+                                <div key={i} className="h-12 bg-gray-100 rounded animate-pulse" />
+                            ))}
+                        </div>
+                    ) : participants.length === 0 ? (
+                        <div className="text-center py-8 text-gray-500">Aucun participant inscrit</div>
+                    ) : (
+                        <div className="rounded-lg border border-gray-200 overflow-hidden">
+                            <table className="w-full text-sm">
+                                <thead className="bg-gray-50 border-b border-gray-200">
+                                    <tr>
+                                        <th className="text-left px-4 py-2 font-medium text-gray-600">Nom</th>
+                                        <th className="text-left px-4 py-2 font-medium text-gray-600">Email</th>
+                                        <th className="text-left px-4 py-2 font-medium text-gray-600 hidden sm:table-cell">Téléphone</th>
+                                        <th className="text-left px-4 py-2 font-medium text-gray-600 hidden sm:table-cell">Inscrit le</th>
+                                        <th className="text-left px-4 py-2 font-medium text-gray-600">Statut</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-100">
+                                    {participants.map((p) => (
+                                        <tr key={p.id} className="hover:bg-gray-50">
+                                            <td className="px-4 py-2 font-medium text-gray-900">
+                                                {p.firstname} {p.lastname}
+                                            </td>
+                                            <td className="px-4 py-2 text-gray-600">{p.email}</td>
+                                            <td className="px-4 py-2 text-gray-600 hidden sm:table-cell">
+                                                {p.phone ?? "—"}
+                                            </td>
+                                            <td className="px-4 py-2 text-gray-600 hidden sm:table-cell">
+                                                {new Date(p.inscribedAt).toLocaleDateString("fr-FR")}
+                                            </td>
+                                            <td className="px-4 py-2">
+                                                {p.completed ? (
+                                                    <Badge className="bg-green-100 text-green-800 border-green-200 flex items-center gap-1 w-fit" variant="outline">
+                                                        <UserCheck className="w-3 h-3" /> Réalisé
+                                                    </Badge>
+                                                ) : (
+                                                    <Badge className="bg-blue-100 text-blue-800 border-blue-200 w-fit" variant="outline">
+                                                        Inscrit
+                                                    </Badge>
+                                                )}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setParticipantsMission(null)}>Fermer</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>

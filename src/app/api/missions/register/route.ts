@@ -71,3 +71,40 @@ export async function POST(req: NextRequest) {
         )
     }
 }
+
+export async function DELETE(req: NextRequest) {
+    const session = await getServerSession(authOptions)
+    if (!session) {
+        return NextResponse.json({ message: "Non autorisé" }, { status: 401 })
+    }
+
+    const { missionId } = await req.json()
+    if (!missionId) {
+        return NextResponse.json({ message: "Mission ID manquant" }, { status: 400 })
+    }
+
+    const mission = await prisma.mission.findUnique({ where: { id: missionId } })
+    if (!mission) {
+        return NextResponse.json({ message: "Mission introuvable" }, { status: 404 })
+    }
+
+    if (mission.date && mission.date < new Date()) {
+        return NextResponse.json(
+            { message: "Impossible de se désinscrire d'une mission passée" },
+            { status: 400 }
+        )
+    }
+
+    const inscription = await prisma.inscription.findUnique({
+        where: { userId_missionId: { userId: session.user.id, missionId } }
+    })
+    if (!inscription) {
+        return NextResponse.json({ message: "Vous n'êtes pas inscrit à cette mission" }, { status: 400 })
+    }
+
+    await prisma.inscription.delete({
+        where: { userId_missionId: { userId: session.user.id, missionId } }
+    })
+
+    return NextResponse.json({ message: "Désinscription réussie" })
+}

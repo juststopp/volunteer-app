@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { airtableService } from '@/lib/airtable';
+import { prisma } from '@/lib/db';
 
 interface Params {
     userId: string;
@@ -12,20 +12,38 @@ export async function GET(
     { params }: { params: Promise<Params> }
 ) {
     try {
-        const waitedParams = await params;
+        const { userId } = await params;
         const session = await getServerSession(authOptions);
 
         if (!session) {
             return NextResponse.json({ error: 'Non authentifié' }, { status: 401 });
         }
 
-        if (session.user.airtableId !== waitedParams.userId) {
+        if (session.user.id !== userId) {
             return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });
         }
 
-        const userData = await airtableService.getUser(waitedParams.userId);
+        const user = await prisma.user.findUnique({
+            where: { id: userId },
+            select: {
+                id: true,
+                firstname: true,
+                lastname: true,
+                email: true,
+                phone: true,
+                points: true,
+                validated: true,
+                role: true,
+                pole: { select: { id: true, name: true } },
+                createdAt: true,
+            }
+        });
 
-        return NextResponse.json(userData);
+        if (!user) {
+            return NextResponse.json({ error: 'Utilisateur introuvable' }, { status: 404 });
+        }
+
+        return NextResponse.json(user);
     } catch (error) {
         console.error('Erreur lors de la récupération de l\'utilisateur:', error);
         return NextResponse.json(

@@ -27,33 +27,16 @@ import {
 
 import { Navbar } from "@/components/navbar";
 import { MissionDrawer } from "@/components/missions/mission-drawer";
+import { Mission } from "@/types/missions";
 
 interface UserProfile {
   id: string;
   firstname: string;
   lastname: string;
-  fullName: string;
   email: string;
   phone: string;
-  points?: number;
-}
-
-interface Mission {
-  id: string;
-  mission: string;
-  description: string;
-  pole: string[];
-  dateMission: string;
-  pointsTribu: number;
-  etat: string;
-  priorite: string;
-  typeMission: string;
-  usersInscrits: Array<{ id: string; name: string }>;
-  usersCompleted: string[];
-  nombreInscrits: number;
-  nombrePersonnes: number;
-  dureeEstimee?: number;
-  referant?: string[];
+  points: number;
+  pole: { id: string; name: string } | null;
 }
 
 const Skeleton = ({ className }: { className: string }) => (
@@ -79,9 +62,7 @@ const ProfileSkeleton = () => (
           </div>
         </div>
       ))}
-
       <Separator />
-
       <div className="grid grid-cols-1 gap-4 text-center">
         <div className="p-4 bg-gray-50 rounded-lg">
           <Skeleton className="w-6 h-6 mx-auto mb-2" />
@@ -102,10 +83,8 @@ const MissionSkeleton = () => (
         <Skeleton className="h-6 w-12" />
       </div>
     </div>
-
     <Skeleton className="h-4 w-full mb-2" />
     <Skeleton className="h-4 w-2/3 mb-3" />
-
     <div className="flex items-center justify-between text-sm">
       <div className="flex items-center gap-4">
         <Skeleton className="h-4 w-20" />
@@ -116,13 +95,7 @@ const MissionSkeleton = () => (
   </div>
 );
 
-const MissionsSkeleton = ({
-  title,
-  count = 3,
-}: {
-  title: string;
-  count?: number;
-}) => (
+const MissionsSkeleton = ({ title, count = 3 }: { title: string; count?: number }) => (
   <Card>
     <CardHeader>
       <CardTitle className="flex items-center gap-2">
@@ -141,6 +114,25 @@ const MissionsSkeleton = ({
   </Card>
 );
 
+const getStateColor = (state: string) => {
+  if (state === "ACTIVE") return "bg-blue-100 text-blue-800 border-blue-200";
+  if (state === "CLOSED") return "bg-orange-100 text-orange-800 border-orange-200";
+  if (state === "DONE") return "bg-green-100 text-green-800 border-green-200";
+  return "bg-gray-100 text-gray-800 border-gray-200";
+};
+
+const getStateLabel = (state: string) => {
+  if (state === "ACTIVE") return "En cours";
+  if (state === "CLOSED") return "Fermée";
+  if (state === "DONE") return "Terminée";
+  return state;
+};
+
+const formatDate = (dateString: string | null) => {
+  if (!dateString) return "Non défini";
+  return new Date(dateString).toLocaleDateString("fr-FR");
+};
+
 export default function ProfilePage() {
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -157,21 +149,17 @@ export default function ProfilePage() {
 
   useEffect(() => {
     const fetchUserData = async () => {
-      if (session?.user?.airtableId) {
+      if (session?.user?.id) {
         try {
           setLoading(true);
 
-          const userResponse = await fetch(
-            `/api/user/${session.user.airtableId}`
-          );
+          const userResponse = await fetch(`/api/user/${session.user.id}`);
           if (!userResponse.ok)
             throw new Error("Erreur lors du chargement du profil");
           const userData = await userResponse.json();
           setUserProfile(userData);
 
-          const missionsResponse = await fetch(
-            `/api/user/${session.user.airtableId}/missions`
-          );
+          const missionsResponse = await fetch(`/api/user/${session.user.id}/missions`);
           if (!missionsResponse.ok)
             throw new Error("Erreur lors du chargement des missions");
           const missionsData = await missionsResponse.json();
@@ -179,10 +167,7 @@ export default function ProfilePage() {
           setInscriptions(missionsData.inscriptions);
           setCompletedMissions(missionsData.completed);
         } catch (error) {
-          console.error(
-            "Erreur lors du chargement des données utilisateur:",
-            error
-          );
+          console.error("Erreur lors du chargement des données utilisateur:", error);
         } finally {
           setLoading(false);
         }
@@ -194,37 +179,8 @@ export default function ProfilePage() {
     }
   }, [session, status]);
 
-  const getInitials = (name: string) => {
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase();
-  };
-
-  const formatDate = (dateString: string) => {
-    if (!dateString) return "Non défini";
-    return new Date(dateString).toLocaleDateString("fr-FR");
-  };
-
-  const getEtatColor = (etat: string) => {
-    if (etat?.includes("Recherche"))
-      return "bg-blue-100 text-blue-800 border-blue-200";
-    if (etat?.includes("En cours"))
-      return "bg-orange-100 text-orange-800 border-orange-200";
-    if (etat?.includes("Terminé"))
-      return "bg-green-100 text-green-800 border-green-200";
-    if (etat?.includes("Annulé"))
-      return "bg-red-100 text-red-800 border-red-200";
-    return "bg-gray-100 text-gray-800 border-gray-200";
-  };
-
-  const getPrioriteColor = (priorite: string) => {
-    if (priorite?.includes("🔴")) return "bg-red-500 text-white";
-    if (priorite?.includes("🟠")) return "bg-orange-500 text-white";
-    if (priorite?.includes("🟡")) return "bg-yellow-500 text-white";
-    if (priorite?.includes("🟢")) return "bg-green-500 text-white";
-    return "bg-gray-500 text-white";
+  const getInitials = (firstname: string, lastname: string) => {
+    return (firstname[0] + lastname[0]).toUpperCase();
   };
 
   if (status === "loading") {
@@ -256,12 +212,12 @@ export default function ProfilePage() {
                     <div className="flex justify-center mb-4">
                       <Avatar className="h-24 w-24">
                         <AvatarFallback className="bg-blue-100 text-blue-700 text-2xl">
-                          {getInitials(userProfile.fullName)}
+                          {getInitials(userProfile.firstname, userProfile.lastname)}
                         </AvatarFallback>
                       </Avatar>
                     </div>
                     <CardTitle className="text-xl">
-                      {userProfile.fullName}
+                      {userProfile.firstname} {userProfile.lastname}
                     </CardTitle>
                     <CardDescription>Membre TRIBU</CardDescription>
                   </CardHeader>
@@ -292,13 +248,23 @@ export default function ProfilePage() {
                       </div>
                     </div>
 
+                    {userProfile.pole && (
+                      <div className="flex items-center gap-3">
+                        <Target className="w-5 h-5 text-gray-400" />
+                        <div>
+                          <p className="font-medium">{userProfile.pole.name}</p>
+                          <p className="text-sm text-gray-500">Pôle</p>
+                        </div>
+                      </div>
+                    )}
+
                     <Separator />
 
                     <div className="grid grid-cols-1 gap-4 text-center">
                       <div className="p-4 bg-blue-50 rounded-lg">
                         <Star className="w-6 h-6 text-blue-600 mx-auto mb-2" />
                         <p className="text-2xl font-bold text-blue-700">
-                          {userProfile.points || 0}
+                          {userProfile.points}
                         </p>
                         <p className="text-sm text-blue-600">Points totaux</p>
                       </div>
@@ -343,28 +309,15 @@ export default function ProfilePage() {
                               <div className="border rounded-lg p-4 hover:bg-gray-50 transition-colors cursor-pointer">
                                 <div className="flex justify-between items-start mb-3">
                                   <h3 className="font-semibold text-lg line-clamp-1">
-                                    {mission.mission}
+                                    {mission.title}
                                   </h3>
                                   <div className="lg:flex hidden gap-2">
                                     <Badge
-                                      className={getEtatColor(mission.etat)}
+                                      className={getStateColor(mission.state)}
                                       variant="outline"
                                     >
-                                      {mission.etat
-                                        ?.replace(/📝|🔄|✅|❌/g, "")
-                                        .trim()}
+                                      {getStateLabel(mission.state)}
                                     </Badge>
-                                    {mission.priorite && (
-                                      <Badge
-                                        className={getPrioriteColor(
-                                          mission.priorite
-                                        )}
-                                      >
-                                        {mission.priorite
-                                          .replace(/🔴|🟠|🟡|🟢/g, "")
-                                          .trim()}
-                                      </Badge>
-                                    )}
                                   </div>
                                 </div>
 
@@ -376,27 +329,20 @@ export default function ProfilePage() {
                                   <div className="flex items-center gap-4">
                                     <div className="flex items-center gap-1">
                                       <Calendar className="w-4 h-4" />
-                                      <span>
-                                        {formatDate(mission.dateMission)}
-                                      </span>
+                                      <span>{formatDate(mission.date)}</span>
                                     </div>
-                                    {mission.pointsTribu && (
+                                    {mission.points > 0 && (
                                       <div className="flex items-center gap-1">
                                         <Star className="w-4 h-4" />
-                                        <span>{mission.pointsTribu} pts</span>
+                                        <span>{mission.points} pts</span>
                                       </div>
                                     )}
                                   </div>
 
-                                  {mission.pole && mission.pole.length > 0 && (
+                                  {mission.pole && (
                                     <div className="flex items-center gap-1">
                                       <Target className="w-4 h-4" />
-                                      <span>
-                                        {mission.pole.slice(0, 2).join(", ")}
-                                      </span>
-                                      {mission.pole.length > 2 && (
-                                        <span>+{mission.pole.length - 2}</span>
-                                      )}
+                                      <span>{mission.pole.name}</span>
                                     </div>
                                   )}
                                 </div>
@@ -435,7 +381,7 @@ export default function ProfilePage() {
                               <div className="border rounded-lg p-4 bg-green-50 border-green-200 cursor-pointer hover:bg-green-100 transition-colors">
                                 <div className="flex justify-between items-start mb-3">
                                   <h3 className="font-semibold text-lg line-clamp-1">
-                                    {mission.mission}
+                                    {mission.title}
                                   </h3>
                                   <div className="flex gap-2">
                                     <Badge
@@ -445,13 +391,13 @@ export default function ProfilePage() {
                                       <CheckCircle2 className="w-3 h-3 mr-1" />
                                       Terminé
                                     </Badge>
-                                    {mission.pointsTribu && (
+                                    {mission.points > 0 && (
                                       <Badge
                                         className="bg-yellow-100 text-yellow-800 border-yellow-200"
                                         variant="outline"
                                       >
                                         <Star className="w-3 h-3 mr-1" />+
-                                        {mission.pointsTribu} pts
+                                        {mission.points} pts
                                       </Badge>
                                     )}
                                   </div>
@@ -462,24 +408,15 @@ export default function ProfilePage() {
                                 </p>
 
                                 <div className="flex items-center justify-between text-sm text-gray-500">
-                                  <div className="flex items-center gap-4">
-                                    <div className="flex items-center gap-1">
-                                      <Calendar className="w-4 h-4" />
-                                      <span>
-                                        {formatDate(mission.dateMission)}
-                                      </span>
-                                    </div>
+                                  <div className="flex items-center gap-1">
+                                    <Calendar className="w-4 h-4" />
+                                    <span>{formatDate(mission.date)}</span>
                                   </div>
 
-                                  {mission.pole && mission.pole.length > 0 && (
+                                  {mission.pole && (
                                     <div className="flex items-center gap-1">
                                       <Target className="w-4 h-4" />
-                                      <span>
-                                        {mission.pole.slice(0, 2).join(", ")}
-                                      </span>
-                                      {mission.pole.length > 2 && (
-                                        <span>+{mission.pole.length - 2}</span>
-                                      )}
+                                      <span>{mission.pole.name}</span>
                                     </div>
                                   )}
                                 </div>

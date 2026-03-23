@@ -1,22 +1,24 @@
-export interface UserInscrit {
-    id: string
-    name: string
-}
-
 export interface Mission {
     id: string;
-    mission: string;
-    description: string;
-    pole: string[];
-    dateMission: string;
-    pointsTribu: number;
-    etat: string;
-    priorite: string;
-    typeMission: string;
-    usersInscrits: UserInscrit[];
-    usersCompleted: string[];
-    nombreInscrits: number;
-    nombrePersonnes: number;
-    dureeEstimee?: number;
-    referant?: string[];
+    title: string;
+    description: string | null;
+    pole: { id: string; name: string } | null;
+    date: string | null;
+    estimatedHours: number | null;
+    points: number;
+    maxPeople: number | null;
+    type: string | null;
+    priority: string | null;
+    state: "ACTIVE" | "CLOSED" | "DONE";
+    referent: string | null;
+    inscriptions: {
+        id: string;
+        userId: string;
+        user: { id: string; firstname: string; lastname: string };
+    }[];
+    realisations: {
+        id: string;
+        userId: string;
+        user: { id: string; firstname: string; lastname: string };
+    }[];
 }

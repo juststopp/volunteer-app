@@ -22,9 +22,8 @@ export function MissionsList() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
-  const [etatFilter, setEtatFilter] = useState("all");
+  const [stateFilter, setStateFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
-  const [prioriteFilter, setPrioriteFilter] = useState("all");
 
   useEffect(() => {
     const fetchMissions = async () => {
@@ -54,32 +53,23 @@ export function MissionsList() {
     if (searchTerm) {
       filtered = filtered.filter(
         (mission) =>
-          mission.mission.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          mission.description.toLowerCase().includes(searchTerm.toLowerCase())
+          mission.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (mission.description ?? "").toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
-    if (etatFilter !== "all") {
-      filtered = filtered.filter((mission) =>
-        mission.etat?.toLowerCase().includes(etatFilter.toLowerCase())
-      );
+    if (stateFilter !== "all") {
+      filtered = filtered.filter((mission) => mission.state === stateFilter);
     }
 
     if (typeFilter !== "all") {
       filtered = filtered.filter(
-        (mission) =>
-          mission.typeMission?.toLowerCase() === typeFilter.toLowerCase()
-      );
-    }
-
-    if (prioriteFilter !== "all") {
-      filtered = filtered.filter((mission) =>
-        mission.priorite?.toLowerCase().includes(prioriteFilter.toLowerCase())
+        (mission) => mission.type?.toLowerCase() === typeFilter.toLowerCase()
       );
     }
 
     setFilteredMissions(filtered);
-  }, [missions, searchTerm, etatFilter, typeFilter, prioriteFilter]);
+  }, [missions, searchTerm, stateFilter, typeFilter]);
 
   if (error) {
     return (
@@ -89,31 +79,9 @@ export function MissionsList() {
     );
   }
 
-  const uniqueEtats = [
-    ...new Set(
-      missions
-        .map((m) => {
-          const etat = m.etat?.replace(/📝|🔄|✅|❌/g, "").trim();
-          return etat;
-        })
-        .filter(Boolean)
-    ),
-  ];
-
   const uniqueTypes = [
-    ...new Set(missions.map((m) => m.typeMission).filter(Boolean)),
-  ];
-
-  const uniquePriorites = [
-    ...new Set(
-      missions
-        .map((m) => {
-          const priorite = m.priorite?.replace(/🔴|🟠|🟡|🟢/g, "").trim();
-          return priorite;
-        })
-        .filter(Boolean)
-    ),
-  ];
+    ...new Set(missions.map((m) => m.type).filter(Boolean)),
+  ] as string[];
 
   return (
     <div className="space-y-6 max-w-screen p-10">
@@ -129,18 +97,16 @@ export function MissionsList() {
         </div>
 
         <div className="flex flex-col sm:flex-row gap-2">
-          <Select value={etatFilter} onValueChange={setEtatFilter}>
+          <Select value={stateFilter} onValueChange={setStateFilter}>
             <SelectTrigger className="w-full sm:w-48">
               <Filter className="w-4 h-4 mr-2" />
               <SelectValue placeholder="État" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Tous les états</SelectItem>
-              {uniqueEtats.map((etat) => (
-                <SelectItem key={etat} value={etat.toLowerCase()}>
-                  {etat}
-                </SelectItem>
-              ))}
+              <SelectItem value="ACTIVE">En cours</SelectItem>
+              <SelectItem value="CLOSED">Fermée</SelectItem>
+              <SelectItem value="DONE">Terminée</SelectItem>
             </SelectContent>
           </Select>
 
@@ -157,30 +123,13 @@ export function MissionsList() {
               ))}
             </SelectContent>
           </Select>
-
-          <Select value={prioriteFilter} onValueChange={setPrioriteFilter}>
-            <SelectTrigger className="w-full sm:w-40">
-              <SelectValue placeholder="Priorité" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Toutes les priorités</SelectItem>
-              {uniquePriorites.map((priorite) => (
-                <SelectItem key={priorite} value={priorite.toLowerCase()}>
-                  {priorite}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
         </div>
       </div>
 
       {isLoading === false && filteredMissions.length === 0 ? (
         <div className="text-center py-12">
           <div className="text-gray-500 text-lg">Aucune mission trouvée</div>
-          {searchTerm ||
-          etatFilter !== "all" ||
-          typeFilter !== "all" ||
-          prioriteFilter !== "all" ? (
+          {searchTerm || stateFilter !== "all" || typeFilter !== "all" ? (
             <p className="text-sm text-gray-400 mt-2">
               Essayez de modifier vos filtres de recherche
             </p>

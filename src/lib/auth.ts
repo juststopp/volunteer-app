@@ -5,7 +5,6 @@ import { NextAuthOptions } from "next-auth"
 import { PrismaAdapter } from "@auth/prisma-adapter"
 
 import { prisma } from "./db"
-import { airtableService } from "./airtable"
 import { sendResetPasswordMail } from "./mail"
 import { randomBytes } from "crypto"
 
@@ -28,9 +27,7 @@ export const authOptions: NextAuthOptions = {
                 }
 
                 const user = await prisma.user.findUnique({
-                    where: {
-                        email: credentials.email
-                    }
+                    where: { email: credentials.email }
                 })
 
                 if (!user || !user.password) {
@@ -46,15 +43,10 @@ export const authOptions: NextAuthOptions = {
                     return null
                 }
 
-                const airtableUser = await airtableService.getUser(user.airtableId as string);
-                if (!airtableUser) {
-                    return null;
-                }
-
                 return {
                     id: user.id,
-                    airtableId: user.airtableId,
-                    validated: airtableUser.compteValide,
+                    validated: user.validated,
+                    role: user.role,
                     email: user.email,
                     name: user.firstname + " " + user.lastname,
                 }
@@ -68,6 +60,7 @@ export const authOptions: NextAuthOptions = {
         async jwt({ token, user }) {
             if (user) {
                 token.id = user.id
+                token.role = (user as { role?: string }).role
             }
             return token
         },
@@ -77,15 +70,11 @@ export const authOptions: NextAuthOptions = {
             }
 
             const user = await prisma.user.findUnique({
-                where: {
-                    id: session.user.id
-                }
+                where: { id: session.user.id }
             })
 
-            const airtableUser = await airtableService.getUser(user?.airtableId as string);
-
-            session.user.airtableId = user?.airtableId || null
-            session.user.validated = airtableUser.compteValide || false
+            session.user.validated = user?.validated ?? false
+            session.user.role = user?.role ?? "USER"
             return session
         },
     },
@@ -103,12 +92,9 @@ export async function resetPassword(email: string) {
     const resetToken = randomBytes(32).toString("hex");
     const resetTokenExpiry = new Date(Date.now() + 3600000);
 
-    await prisma.user.updateMany({
+    await prisma.user.update({
         where: { email },
-        data: {
-            resetToken,
-            resetTokenExpiry
-        }
+        data: { resetToken, resetTokenExpiry }
     });
 
     sendResetPasswordMail({
@@ -122,9 +108,7 @@ export async function updatePassword(token: string, password: string) {
     const user = await prisma.user.findFirst({
         where: {
             resetToken: token,
-            resetTokenExpiry: {
-                gt: new Date()
-            }
+            resetTokenExpiry: { gt: new Date() }
         }
     });
 
@@ -134,7 +118,7 @@ export async function updatePassword(token: string, password: string) {
 
     const hashedPassword = await bcrypt.hash(password as string, 12);
 
-    await prisma.user.updateMany({
+    await prisma.user.update({
         where: { id: user.id },
         data: {
             password: hashedPassword,

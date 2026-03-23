@@ -77,6 +77,12 @@ const Navbar = () => {
               Profil
             </Button>
 
+            {session.user.role === "ADMIN" && (
+              <Button variant="outline" onClick={() => router.push("/admin")}>
+                Admin
+              </Button>
+            )}
+
             <Button
               variant="destructive"
               onClick={() => signOut({ callbackUrl: "/" })}
@@ -121,6 +127,16 @@ const Navbar = () => {
               >
                 Profil
               </Button>
+
+              {session.user.role === "ADMIN" && (
+                <Button
+                  variant="ghost"
+                  onClick={() => handleNavigation("/admin")}
+                  className="justify-start py-3 px-4 text-left hover:bg-gray-50"
+                >
+                  Administration
+                </Button>
+              )}
 
               <div className="border-t border-gray-100 pt-3">
                 <Button

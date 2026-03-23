@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import bcrypt from "bcryptjs"
 import { prisma } from "@/lib/db"
-import { airtableService } from "@/lib/airtable"
 
 export async function POST(request: NextRequest) {
     try {
@@ -27,23 +26,6 @@ export async function POST(request: NextRequest) {
 
         const hashedPassword = await bcrypt.hash(password, 12)
 
-        let airtableId: string | null = null
-        try {
-            airtableId = await airtableService.createUser({
-                firstname,
-                lastname,
-                email,
-                phone,
-                poleId
-            })
-        } catch (airtableError) {
-            console.error('Erreur Airtable:', airtableError)
-            return NextResponse.json(
-                { message: "Erreur lors de la synchronisation avec Airtable" },
-                { status: 500 }
-            )
-        }
-
         const user = await prisma.user.create({
             data: {
                 firstname,
@@ -52,7 +34,6 @@ export async function POST(request: NextRequest) {
                 password: hashedPassword,
                 phone,
                 poleId,
-                airtableId,
             }
         })
 

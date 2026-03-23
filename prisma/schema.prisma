@@ -3,8 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model Account {
@@ -34,23 +34,81 @@ model Session {
 }
 
 model User {
-  id               String    @id @default(cuid())
-  firstname        String
-  lastname         String
-  email            String    @unique
-  password         String?
-  phone            String?
-  poleId           String?
-  airtableId       String?
-  emailVerified    DateTime?
-  image            String?
-  accounts         Account[]
-  sessions         Session[]
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
-  resetToken              String?
-  resetTokenExpiry        DateTime?
-  validationEmailSentAt   DateTime?
+  id                    String         @id @default(cuid())
+  firstname             String
+  lastname              String
+  email                 String         @unique
+  password              String?
+  phone                 String?
+  role                  Role           @default(USER)
+  validated             Boolean        @default(false)
+  points                Int            @default(0)
+  emailVerified         DateTime?
+  image                 String?
+  poleId                String?
+  pole                  Pole?          @relation(fields: [poleId], references: [id])
+  accounts              Account[]
+  sessions              Session[]
+  inscriptions          Inscription[]
+  realisations          Realisation[]
+  createdAt             DateTime       @default(now())
+  updatedAt             DateTime       @updatedAt
+  resetToken            String?
+  resetTokenExpiry      DateTime?
+  validationEmailSentAt DateTime?
+}
+
+model Pole {
+  id          String    @id @default(cuid())
+  name        String    @unique
+  description String?
+  missions    Mission[]
+  users       User[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Mission {
+  id             String        @id @default(cuid())
+  title          String
+  description    String?
+  poleId         String?
+  pole           Pole?         @relation(fields: [poleId], references: [id])
+  date           DateTime?
+  estimatedHours Float?
+  points         Int           @default(0)
+  maxPeople      Int?
+  type           String?
+  priority       String?
+  state          MissionState  @default(ACTIVE)
+  referent       String?
+  inscriptions   Inscription[]
+  realisations   Realisation[]
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+}
+
+model Inscription {
+  id        String   @id @default(cuid())
+  userId    String
+  missionId String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  mission   Mission  @relation(fields: [missionId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, missionId])
+}
+
+model Realisation {
+  id          String   @id @default(cuid())
+  userId      String
+  missionId   String
+  commentaire String?
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  mission     Mission  @relation(fields: [missionId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+
+  @@unique([userId, missionId])
 }
 
 model VerificationToken {
@@ -59,4 +117,15 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum MissionState {
+  ACTIVE
+  CLOSED
+  DONE
 }

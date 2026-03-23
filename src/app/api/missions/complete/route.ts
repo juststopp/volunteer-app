@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
-import { airtableService } from "@/lib/airtable"
+import { prisma } from "@/lib/db"
 
 export async function POST(req: NextRequest) {
     try {
@@ -14,14 +14,6 @@ export async function POST(req: NextRequest) {
             )
         }
 
-        const userId = session.user.airtableId
-        if (!userId) {
-            return NextResponse.json(
-                { message: "ID utilisateur manquant" },
-                { status: 400 }
-            )
-        }
-
         const { missionId, commentaire } = await req.json()
 
         if (!missionId) {
@@ -31,15 +23,42 @@ export async function POST(req: NextRequest) {
             )
         }
 
-        await airtableService.completeMission(missionId, userId, commentaire)
+        const mission = await prisma.mission.findUnique({
+            where: { id: missionId }
+        })
+
+        if (!mission) {
+            return NextResponse.json(
+                { message: "Mission introuvable" },
+                { status: 404 }
+            )
+        }
+
+        await prisma.$transaction([
+            prisma.realisation.create({
+                data: {
+                    userId: session.user.id,
+                    missionId,
+                    commentaire: commentaire ?? null,
+                }
+            }),
+            prisma.user.update({
+                where: { id: session.user.id },
+                data: { points: { increment: mission.points } }
+            })
+        ])
+
+        return NextResponse.json({ message: "Mission complétée." }, { status: 200 })
+    } catch (error: unknown) {
+        if ((error as { code?: string }).code === "P2002") {
+            return NextResponse.json(
+                { message: "Vous avez déjà complété cette mission" },
+                { status: 400 }
+            )
+        }
+        console.error('Erreur lors de la complétion:', error)
         return NextResponse.json(
-            { message: "Mission complétée." },
-            { status: 200 }
-        )
-    } catch (error) {
-        console.error('Erreur lors de la récupération de la session:', error)
-        return NextResponse.json(
-            { message: "Erreur lors de la récupération de la session" },
+            { message: "Erreur lors de la complétion de la mission" },
             { status: 500 }
         )
     }

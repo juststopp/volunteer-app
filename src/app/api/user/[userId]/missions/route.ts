@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { airtableService } from '@/lib/airtable';
+import { prisma } from '@/lib/db';
 
 interface Params {
     userId: string;
@@ -12,30 +12,41 @@ export async function GET(
     { params }: { params: Promise<Params> }
 ) {
     try {
-        const waitedParams = await params;
+        const { userId } = await params;
         const session = await getServerSession(authOptions);
 
         if (!session) {
             return NextResponse.json({ error: 'Non authentifié' }, { status: 401 });
         }
 
-        if (session.user.airtableId !== waitedParams.userId) {
+        if (session.user.id !== userId) {
             return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });
         }
 
-        const missions = await airtableService.getMissions();
+        const [inscriptions, realisations] = await Promise.all([
+            prisma.inscription.findMany({
+                where: { userId },
+                include: {
+                    mission: { include: { pole: true } }
+                },
+                orderBy: { createdAt: 'desc' }
+            }),
+            prisma.realisation.findMany({
+                where: { userId },
+                include: {
+                    mission: { include: { pole: true } }
+                },
+                orderBy: { createdAt: 'desc' }
+            })
+        ])
 
-        const userInscriptions = missions.filter(mission =>
-            mission.usersInscrits?.some(user => user.id === waitedParams.userId) && !mission.usersCompleted?.includes(waitedParams.userId)
-        );
-
-        const userCompletedMissions = missions.filter(mission =>
-            mission.usersCompleted?.includes(waitedParams.userId)
-        );
+        const completedMissionIds = new Set(realisations.map(r => r.missionId))
 
         return NextResponse.json({
-            inscriptions: userInscriptions,
-            completed: userCompletedMissions
+            inscriptions: inscriptions
+                .filter(i => !completedMissionIds.has(i.missionId))
+                .map(i => i.mission),
+            completed: realisations.map(r => r.mission),
         });
     } catch (error) {
         console.error('Erreur lors de la récupération des missions:', error);

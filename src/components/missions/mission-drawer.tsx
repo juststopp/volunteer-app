@@ -1,3 +1,5 @@
+"use client";
+
 import { Mission } from "@/types/missions";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -52,16 +54,6 @@ const getTypeMissionColor = (type: string) => {
   return "bg-gray-100 text-gray-800 border-gray-200";
 };
 
-const formatDuree = (dureeEnSecondes: number) => {
-  const heures = Math.floor(dureeEnSecondes / 3600);
-  const minutes = Math.floor((dureeEnSecondes % 3600) / 60);
-
-  if (heures > 0) {
-    return minutes > 0 ? `${heures}h${minutes}m` : `${heures}h`;
-  }
-  return `${minutes}m`;
-};
-
 const formatDate = (dateString: string) => {
   if (!dateString) return "Non défini";
   return new Date(dateString).toLocaleDateString("fr-FR", {
@@ -72,12 +64,8 @@ const formatDate = (dateString: string) => {
   });
 };
 
-const getInitials = (name: string) => {
-  return name
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase();
+const getInitials = (firstname: string, lastname: string) => {
+  return (firstname[0] + lastname[0]).toUpperCase();
 };
 
 export function MissionDrawer({
@@ -89,19 +77,16 @@ export function MissionDrawer({
   const [hasParticipated, setHasParticipated] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  const isDatePassed = mission.dateMission
-    ? new Date(mission.dateMission) < new Date()
+  const isDatePassed = mission.date
+    ? new Date(mission.date) < new Date()
     : false;
-  const userInscrit = currentUser?.airtableId
-    ? mission.usersInscrits?.find((user) => {
-        return user.id === currentUser?.airtableId;
-      })
+
+  const userInscrit = currentUser?.id
+    ? mission.inscriptions?.find((i) => i.userId === currentUser.id)
     : null;
 
-  const userCompleted = currentUser?.airtableId
-    ? mission.usersCompleted?.find((user) => {
-        return user === currentUser?.airtableId;
-      })
+  const userCompleted = currentUser?.id
+    ? mission.realisations?.find((r) => r.userId === currentUser.id)
     : null;
 
   const handleInscription = async () => {
@@ -113,13 +98,8 @@ export function MissionDrawer({
 
       const response = await fetch("/api/missions/register", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          missionId: mission.id,
-          commentaire: commentaire,
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ missionId: mission.id, commentaire }),
       });
 
       if (response.ok) {
@@ -142,27 +122,23 @@ export function MissionDrawer({
       ).value;
 
       if (commentaire.length === 0) {
-        toast.error(
-          "Veuillez ajouter un commentaire pour valider votre participation."
-        );
+        toast.error("Veuillez ajouter un commentaire pour valider votre participation.");
         return;
       }
 
       setIsDialogOpen(false);
       const response = await fetch("/api/missions/complete", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          missionId: mission.id,
-          commentaire: commentaire,
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ missionId: mission.id, commentaire }),
       });
 
       if (response.ok) {
         setHasParticipated(true);
         toast.success("Merci pour votre participation !");
+      } else {
+        const data = await response.json();
+        toast.error(data.message ?? "Erreur lors de la validation.");
       }
     } catch (error) {
       console.error("Erreur lors de la validation de la mission:", error);
@@ -225,12 +201,12 @@ export function MissionDrawer({
         <ScrollArea className="overflow-auto p-4">
           <DrawerHeader className="text-left">
             <DrawerTitle className="text-xl mb-3 text-left">
-              {mission.mission}
+              {mission.title}
             </DrawerTitle>
             <div className="sm:w-2/3 w-full">
               <DrawerDescription asChild>
                 <div className="text-left leading-relaxed prose prose-sm max-w-none text-muted-foreground">
-                  <ReactMarkdown>{mission.description}</ReactMarkdown>
+                  <ReactMarkdown>{mission.description ?? ""}</ReactMarkdown>
                 </div>
               </DrawerDescription>
             </div>
@@ -238,101 +214,91 @@ export function MissionDrawer({
 
           <div className="px-4 pb-6 space-y-6">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {mission.dateMission && (
+              {mission.date && (
                 <div className="flex flex-col items-center p-4 bg-gray-50 rounded-lg">
                   <Calendar className="w-6 h-6 text-blue-600 mb-2" />
                   <p className="text-sm font-medium text-gray-900">Date</p>
                   <p className="text-xs text-gray-600 text-center mt-1">
-                    {formatDate(mission.dateMission)}
+                    {formatDate(mission.date)}
                   </p>
                 </div>
               )}
 
-              {mission.dureeEstimee && (
+              {mission.estimatedHours && (
                 <div className="flex flex-col items-center p-4 bg-gray-50 rounded-lg">
                   <Clock className="w-6 h-6 text-green-600 mb-2" />
                   <p className="text-sm font-medium text-gray-900">Durée</p>
                   <p className="text-xs text-gray-600 mt-1">
-                    {formatDuree(mission.dureeEstimee)}
+                    {mission.estimatedHours}h
                   </p>
                 </div>
               )}
 
               <div className="flex flex-col items-center p-4 bg-gray-50 rounded-lg">
                 <Users className="w-6 h-6 text-purple-600 mb-2" />
-                <p className="text-sm font-medium text-gray-900">
-                  Participants
-                </p>
+                <p className="text-sm font-medium text-gray-900">Participants</p>
                 <p className="text-xs text-gray-600 mt-1">
-                  {mission.nombreInscrits}/{mission.nombrePersonnes}
+                  {mission.inscriptions.length}/{mission.maxPeople ?? "∞"}
                 </p>
               </div>
 
-              {mission.pointsTribu && (
+              {mission.points > 0 && (
                 <div className="flex flex-col items-center p-4 bg-gray-50 rounded-lg">
                   <Star className="w-6 h-6 text-yellow-600 mb-2" />
                   <p className="text-sm font-medium text-gray-900">Points</p>
                   <p className="text-xs text-gray-600 mt-1">
-                    {mission.pointsTribu} pts
+                    {mission.points} pts
                   </p>
                 </div>
               )}
             </div>
 
-            {mission.pole && mission.pole.length > 0 && (
+            {mission.pole && (
               <div>
                 <h3 className="font-semibold mb-3 flex items-center gap-2">
                   <Target className="w-5 h-5" />
-                  Pôles concernés
+                  Pôle concerné
                 </h3>
-                <div className="flex flex-wrap gap-2">
-                  {mission.pole.map((p, index) => (
-                    <Badge
-                      key={index}
-                      variant="outline"
-                      className="text-sm py-1 px-3"
-                    >
-                      {p}
-                    </Badge>
-                  ))}
-                </div>
+                <Badge variant="outline" className="text-sm py-1 px-3">
+                  {mission.pole.name}
+                </Badge>
               </div>
             )}
 
-            {mission.typeMission && (
+            {mission.type && (
               <div>
                 <h3 className="font-semibold mb-3 flex items-center gap-2">
                   <MapPin className="w-5 h-5" />
                   Type de mission
                 </h3>
                 <Badge
-                  className={getTypeMissionColor(mission.typeMission)}
+                  className={getTypeMissionColor(mission.type)}
                   variant="outline"
                 >
-                  {mission.typeMission}
+                  {mission.type}
                 </Badge>
               </div>
             )}
 
-            {mission.usersInscrits && mission.usersInscrits.length > 0 && (
+            {mission.inscriptions && mission.inscriptions.length > 0 && (
               <div>
                 <h3 className="font-semibold mb-3 flex items-center gap-2">
                   <User className="w-5 h-5" />
-                  Participants inscrits ({mission.usersInscrits.length})
+                  Participants inscrits ({mission.inscriptions.length})
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {mission.usersInscrits.map((user, index) => (
+                  {mission.inscriptions.map((inscription) => (
                     <div
-                      key={index}
+                      key={inscription.id}
                       className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg"
                     >
                       <Avatar className="h-10 w-10">
                         <AvatarFallback className="bg-blue-100 text-blue-700">
-                          {getInitials(user.name)}
+                          {getInitials(inscription.user.firstname, inscription.user.lastname)}
                         </AvatarFallback>
                       </Avatar>
                       <span className="font-medium text-gray-900">
-                        {user.name}
+                        {inscription.user.firstname} {inscription.user.lastname}
                       </span>
                     </div>
                   ))}
@@ -340,23 +306,15 @@ export function MissionDrawer({
               </div>
             )}
 
-            {mission.referant && mission.referant.length > 0 && (
+            {mission.referent && (
               <div>
                 <h3 className="font-semibold mb-3 flex items-center gap-2">
                   <Star className="w-5 h-5" />
-                  Référant(s)
+                  Référant
                 </h3>
-                <div className="flex flex-wrap gap-2">
-                  {mission.referant.map((ref, index) => (
-                    <Badge
-                      key={index}
-                      variant="secondary"
-                      className="text-sm py-1 px-3"
-                    >
-                      {ref}
-                    </Badge>
-                  ))}
-                </div>
+                <Badge variant="secondary" className="text-sm py-1 px-3">
+                  {mission.referent}
+                </Badge>
               </div>
             )}
 
@@ -395,7 +353,7 @@ export function MissionDrawer({
                   </DialogTitle>
                   <DialogDescription>
                     {isDatePassed ? "Valider" : "S'inscrire à"} la mission{" "}
-                    {mission.mission}
+                    {mission.title}
                   </DialogDescription>
                 </DialogHeader>
                 <div className="grid gap-4">

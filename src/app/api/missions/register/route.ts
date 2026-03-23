@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
-import { airtableService } from "@/lib/airtable"
+import { prisma } from "@/lib/db"
 
 export async function POST(req: NextRequest) {
     try {
@@ -14,15 +14,7 @@ export async function POST(req: NextRequest) {
             )
         }
 
-        const userId = session.user.airtableId
-        if (!userId) {
-            return NextResponse.json(
-                { message: "ID utilisateur manquant" },
-                { status: 400 }
-            )
-        }
-
-        const { missionId, commentaire } = await req.json()
+        const { missionId } = await req.json()
 
         if (!missionId) {
             return NextResponse.json(
@@ -31,24 +23,50 @@ export async function POST(req: NextRequest) {
             )
         }
 
-        const mission = await airtableService.getMission(missionId)
+        const mission = await prisma.mission.findUnique({
+            where: { id: missionId },
+            include: { inscriptions: true }
+        })
 
-        if (mission.dateMission && new Date(mission.dateMission) < new Date()) {
+        if (!mission) {
+            return NextResponse.json(
+                { message: "Mission introuvable" },
+                { status: 404 }
+            )
+        }
+
+        if (mission.date && mission.date < new Date()) {
             return NextResponse.json(
                 { message: "La date de la mission est passée" },
                 { status: 400 }
             )
         }
 
-        await airtableService.inscrireMission(missionId, userId, commentaire)
+        if (mission.maxPeople && mission.inscriptions.length >= mission.maxPeople) {
+            return NextResponse.json(
+                { message: "La mission est complète" },
+                { status: 400 }
+            )
+        }
+
+        await prisma.inscription.create({
+            data: {
+                userId: session.user.id,
+                missionId,
+            }
+        })
+
+        return NextResponse.json({ message: "Inscription réussie" }, { status: 200 })
+    } catch (error: unknown) {
+        if ((error as { code?: string }).code === "P2002") {
+            return NextResponse.json(
+                { message: "Vous êtes déjà inscrit à cette mission" },
+                { status: 400 }
+            )
+        }
+        console.error('Erreur lors de l\'inscription:', error)
         return NextResponse.json(
-            { message: "Inscription réussie" },
-            { status: 200 }
-        )
-    } catch (error) {
-        console.error('Erreur lors de la récupération de la session:', error)
-        return NextResponse.json(
-            { message: "Erreur lors de la récupération de la session" },
+            { message: "Erreur lors de l'inscription" },
             { status: 500 }
         )
     }

@@ -584,7 +584,7 @@ export default function AdminMissionsPage() {
                     <th className="text-left px-4 py-2 font-medium text-gray-600 hidden sm:table-cell">
                       Inscrit le
                     </th>
-                    <th className="text-left px-4 py-2 font-medium text-gray-600 hidden sm:table-cell">
+                    <th className="text-left px-4 py-2 font-medium text-gray-600 hidden">
                       Commentaire
                     </th>
                     <th className="text-left px-4 py-2 font-medium text-gray-600">
@@ -605,7 +605,7 @@ export default function AdminMissionsPage() {
                       <td className="px-4 py-2 text-gray-600 hidden sm:table-cell">
                         {new Date(p.inscribedAt).toLocaleDateString("fr-FR")}
                       </td>
-                      <td className="px-4 py-2 text-gray-600 hidden sm:table-cell">
+                      <td className="px-4 py-2 text-gray-600">
                         {p.comment ?? "—"}
                       </td>
                       <td className="px-4 py-2">

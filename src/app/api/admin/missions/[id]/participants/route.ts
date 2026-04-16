@@ -33,8 +33,6 @@ export async function GET(
         orderBy: { createdAt: "asc" }
     })
 
-    console.log("Inscriptions:", inscriptions)
-
     const realisationIds = await prisma.realisation.findMany({
         where: { missionId: id },
         select: { userId: true }

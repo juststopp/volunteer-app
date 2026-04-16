@@ -578,14 +578,14 @@ export default function AdminMissionsPage() {
                     <th className="text-left px-4 py-2 font-medium text-gray-600">
                       Email
                     </th>
-                    <th className="text-left px-4 py-2 font-medium text-gray-600 hidden sm:table-cell">
+                    <th className="text-left px-4 py-2 font-medium text-gray-600">
                       Téléphone
+                    </th>
+                    <th className="text-left px-4 py-2 font-medium text-gray-600">
+                      Commentaire
                     </th>
                     <th className="text-left px-4 py-2 font-medium text-gray-600 hidden sm:table-cell">
                       Inscrit le
-                    </th>
-                    <th className="text-left px-4 py-2 font-medium text-gray-600 hidden">
-                      Commentaire
                     </th>
                     <th className="text-left px-4 py-2 font-medium text-gray-600">
                       Statut
@@ -599,14 +599,14 @@ export default function AdminMissionsPage() {
                         {p.firstname} {p.lastname}
                       </td>
                       <td className="px-4 py-2 text-gray-600">{p.email}</td>
-                      <td className="px-4 py-2 text-gray-600 hidden sm:table-cell">
+                      <td className="px-4 py-2 text-gray-600">
                         {p.phone ?? "—"}
-                      </td>
-                      <td className="px-4 py-2 text-gray-600 hidden sm:table-cell">
-                        {new Date(p.inscribedAt).toLocaleDateString("fr-FR")}
                       </td>
                       <td className="px-4 py-2 text-gray-600">
                         {p.comment ?? "—"}
+                      </td>
+                      <td className="px-4 py-2 text-gray-600 hidden sm:table-cell">
+                        {new Date(p.inscribedAt).toLocaleDateString("fr-FR")}
                       </td>
                       <td className="px-4 py-2">
                         {p.completed ? (

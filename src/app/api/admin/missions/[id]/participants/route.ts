@@ -43,9 +43,8 @@ export async function GET(
         ...i.user,
         inscribedAt: i.createdAt,
         completed: completedSet.has(i.user.id),
+        comment: i.comment
     }))
-
-    console.log(participants)
 
     return NextResponse.json(participants)
 }

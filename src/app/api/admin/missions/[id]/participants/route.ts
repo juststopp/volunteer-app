@@ -45,5 +45,7 @@ export async function GET(
         completed: completedSet.has(i.user.id),
     }))
 
+    console.log(participants)
+
     return NextResponse.json(participants)
 }

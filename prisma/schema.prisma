@@ -92,6 +92,7 @@ model Inscription {
   id        String   @id @default(cuid())
   userId    String
   missionId String
+  comment   String?
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   mission   Mission  @relation(fields: [missionId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())

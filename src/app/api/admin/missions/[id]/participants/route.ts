@@ -26,10 +26,15 @@ export async function GET(
                     email: true,
                     phone: true,
                 }
+            },
+            select: {
+                comment: true
             }
         },
         orderBy: { createdAt: "asc" }
     })
+
+    console.log("Inscriptions:", inscriptions)
 
     const realisationIds = await prisma.realisation.findMany({
         where: { missionId: id },

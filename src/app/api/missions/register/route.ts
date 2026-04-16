@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
             )
         }
 
-        const { missionId } = await req.json()
+        const { missionId, comment } = await req.json()
 
         if (!missionId) {
             return NextResponse.json(
@@ -53,6 +53,7 @@ export async function POST(req: NextRequest) {
             data: {
                 userId: session.user.id,
                 missionId,
+                comment: comment || null
             }
         })
 

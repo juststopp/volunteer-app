@@ -101,7 +101,7 @@ export function MissionDrawer({
       const response = await fetch("/api/missions/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ missionId: mission.id, commentaire }),
+        body: JSON.stringify({ missionId: mission.id, comment: commentaire }),
       });
 
       if (response.ok) {
@@ -109,7 +109,9 @@ export function MissionDrawer({
         toast.success("Vous êtes inscrit à la mission !");
       } else {
         const data = await response.json();
-        toast.error(data.message ?? "Erreur lors de l'inscription à la mission.");
+        toast.error(
+          data.message ?? "Erreur lors de l'inscription à la mission.",
+        );
       }
     } catch (error) {
       console.error("Erreur lors de l'inscription à la mission:", error);
@@ -147,7 +149,9 @@ export function MissionDrawer({
       ).value;
 
       if (commentaire.length === 0) {
-        toast.error("Veuillez ajouter un commentaire pour valider votre participation.");
+        toast.error(
+          "Veuillez ajouter un commentaire pour valider votre participation.",
+        );
         return;
       }
 
@@ -262,7 +266,9 @@ export function MissionDrawer({
 
               <div className="flex flex-col items-center p-4 bg-gray-50 rounded-lg">
                 <Users className="w-6 h-6 text-purple-600 mb-2" />
-                <p className="text-sm font-medium text-gray-900">Participants</p>
+                <p className="text-sm font-medium text-gray-900">
+                  Participants
+                </p>
                 <p className="text-xs text-gray-600 mt-1">
                   {mission.inscriptions.length}/{mission.maxPeople ?? "∞"}
                 </p>
@@ -320,7 +326,10 @@ export function MissionDrawer({
                     >
                       <Avatar className="h-10 w-10">
                         <AvatarFallback className="bg-blue-100 text-blue-700">
-                          {getInitials(inscription.user.firstname, inscription.user.lastname)}
+                          {getInitials(
+                            inscription.user.firstname,
+                            inscription.user.lastname,
+                          )}
                         </AvatarFallback>
                       </Avatar>
                       <span className="font-medium text-gray-900">
@@ -347,7 +356,8 @@ export function MissionDrawer({
             <Separator />
 
             {(() => {
-              const effectivelyRegistered = (userInscrit || isInscrit) && !isDesinscrit;
+              const effectivelyRegistered =
+                (userInscrit || isInscrit) && !isDesinscrit;
               if (!isDatePassed && effectivelyRegistered) {
                 return (
                   <div className="flex gap-3">
@@ -371,12 +381,16 @@ export function MissionDrawer({
               return null;
             })()}
 
-            <Dialog open={isDesinscritDialogOpen} onOpenChange={setIsDesinscritDialogOpen}>
+            <Dialog
+              open={isDesinscritDialogOpen}
+              onOpenChange={setIsDesinscritDialogOpen}
+            >
               <DialogContent className="sm:max-w-[400px]">
                 <DialogHeader>
                   <DialogTitle>Se désinscrire</DialogTitle>
                   <DialogDescription>
-                    Êtes-vous sûr de vouloir vous désinscrire de la mission <strong>{mission.title}</strong> ?
+                    Êtes-vous sûr de vouloir vous désinscrire de la mission{" "}
+                    <strong>{mission.title}</strong> ?
                   </DialogDescription>
                 </DialogHeader>
                 <DialogFooter>
@@ -390,31 +404,41 @@ export function MissionDrawer({
               </DialogContent>
             </Dialog>
 
-            {buttonConfig.disabled === true && !(!isDatePassed && (userInscrit || isInscrit) && !isDesinscrit) && (
-              <div className="flex gap-3">
-                <Button
-                  className={`flex-1 ${buttonConfig.className || ""}`}
-                  variant={buttonConfig.variant}
-                  disabled={buttonConfig.disabled}
-                >
-                  {buttonConfig.text}
-                </Button>
-              </div>
-            )}
+            {buttonConfig.disabled === true &&
+              !(
+                !isDatePassed &&
+                (userInscrit || isInscrit) &&
+                !isDesinscrit
+              ) && (
+                <div className="flex gap-3">
+                  <Button
+                    className={`flex-1 ${buttonConfig.className || ""}`}
+                    variant={buttonConfig.variant}
+                    disabled={buttonConfig.disabled}
+                  >
+                    {buttonConfig.text}
+                  </Button>
+                </div>
+              )}
 
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
-                {buttonConfig.disabled === false && !(!isDatePassed && (userInscrit || isInscrit) && !isDesinscrit) && (
-                  <div className="flex gap-3">
-                    <Button
-                      className={`flex-1 ${buttonConfig.className || ""}`}
-                      variant={buttonConfig.variant}
-                      disabled={buttonConfig.disabled}
-                    >
-                      {buttonConfig.text}
-                    </Button>
-                  </div>
-                )}
+                {buttonConfig.disabled === false &&
+                  !(
+                    !isDatePassed &&
+                    (userInscrit || isInscrit) &&
+                    !isDesinscrit
+                  ) && (
+                    <div className="flex gap-3">
+                      <Button
+                        className={`flex-1 ${buttonConfig.className || ""}`}
+                        variant={buttonConfig.variant}
+                        disabled={buttonConfig.disabled}
+                      >
+                        {buttonConfig.text}
+                      </Button>
+                    </div>
+                  )}
               </DialogTrigger>
               <DialogContent className="sm:max-w-[550px]">
                 <DialogHeader>

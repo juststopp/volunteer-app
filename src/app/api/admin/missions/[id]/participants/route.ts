@@ -17,7 +17,9 @@ export async function GET(
 
     const inscriptions = await prisma.inscription.findMany({
         where: { missionId: id },
-        include: {
+        select: {
+            createdAt: true,
+            comment: true,
             user: {
                 select: {
                     id: true,
@@ -26,9 +28,6 @@ export async function GET(
                     email: true,
                     phone: true,
                 }
-            },
-            select: {
-                comment: true
             }
         },
         orderBy: { createdAt: "asc" }

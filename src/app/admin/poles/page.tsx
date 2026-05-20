@@ -97,8 +97,8 @@ export default function AdminPolesPage() {
     };
 
     return (
-        <div className="p-8">
-            <div className="flex items-center justify-between mb-6">
+        <div className="p-4 sm:p-8">
+            <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
                 <div>
                     <h1 className="text-2xl font-bold text-gray-900">Pôles</h1>
                     <p className="text-gray-500 mt-1">{poles.length} pôles configurés</p>
@@ -156,7 +156,7 @@ export default function AdminPolesPage() {
                     {poles.length === 0 && (
                         <div className="col-span-3 text-center py-16 text-gray-500">
                             Aucun pôle créé.{" "}
-                            <button onClick={openCreate} className="text-blue-600 underline">
+                            <button onClick={openCreate} className="text-[#0A9696] underline">
                                 Créer le premier pôle →
                             </button>
                         </div>

@@ -68,6 +68,12 @@ export function MissionsList() {
       );
     }
 
+    // Tri : ACTIVE en premier, DONE avant-dernier, CLOSED en dernier
+    const stateOrder: Record<string, number> = { ACTIVE: 0, DONE: 1, CLOSED: 2 };
+    filtered = [...filtered].sort(
+      (a, b) => (stateOrder[a.state] ?? 1) - (stateOrder[b.state] ?? 1)
+    );
+
     setFilteredMissions(filtered);
   }, [missions, searchTerm, stateFilter, typeFilter]);
 
@@ -84,7 +90,7 @@ export function MissionsList() {
   ] as string[];
 
   return (
-    <div className="space-y-6 max-w-screen p-10">
+    <div className="space-y-6 max-w-screen p-4 sm:p-6 md:p-10">
       <div className="flex flex-col lg:flex-row gap-4">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -147,7 +153,7 @@ export function MissionsList() {
               {filteredMissions.length > 1 ? "s" : ""}
             </h2>
             <div className="text-sm text-gray-500">
-              Triées par date de mission
+              En cours · Terminées · Fermées
             </div>
           </div>
 

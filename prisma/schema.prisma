@@ -78,38 +78,44 @@ model Mission {
   estimatedHours Float?
   points         Int           @default(0)
   maxPeople      Int?
-  type           String?
-  priority       String?
-  state          MissionState  @default(ACTIVE)
-  referent       String?
-  inscriptions   Inscription[]
-  realisations   Realisation[]
+  type             String?
+  priority         String?
+  state            MissionState  @default(ACTIVE)
+  referent         String?
+  recurrenceCount  Int?          // ex: 1
+  recurrenceUnit   String?       // "jour" | "semaine" | "mois"
+  inscriptions     Inscription[]
+  realisations     Realisation[]
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
 }
 
 model Inscription {
-  id        String   @id @default(cuid())
-  userId    String
-  missionId String
-  comment   String?
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  mission   Mission  @relation(fields: [missionId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
+  id                String    @id @default(cuid())
+  userId            String
+  missionId         String
+  comment           String?
+  availableFrom     DateTime?
+  availableDuration Float?
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  mission           Mission   @relation(fields: [missionId], references: [id], onDelete: Cascade)
+  createdAt         DateTime  @default(now())
 
   @@unique([userId, missionId])
 }
 
 model Realisation {
-  id          String   @id @default(cuid())
-  userId      String
-  missionId   String
-  commentaire String?
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  mission     Mission  @relation(fields: [missionId], references: [id], onDelete: Cascade)
-  createdAt   DateTime @default(now())
-
-  @@unique([userId, missionId])
+  id                String    @id @default(cuid())
+  userId            String
+  missionId         String
+  commentaire       String?
+  effectiveDuration Float?
+  pointsAwarded     Int?
+  participatedAt    DateTime? // date déclarée par l'utilisateur (missions récurrentes)
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  mission           Mission   @relation(fields: [missionId], references: [id], onDelete: Cascade)
+  createdAt         DateTime  @default(now())
+  // Pas de @@unique : les missions récurrentes autorisent plusieurs participations par utilisateur
 }
 
 model VerificationToken {

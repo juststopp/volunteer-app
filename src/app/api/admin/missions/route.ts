@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
     const session = await requireAdmin()
     if (!session) return NextResponse.json({ message: "Non autorisé" }, { status: 403 })
 
-    const { title, description, poleId, date, estimatedHours, points, maxPeople, type, priority, state, referent } = await req.json()
+    const { title, description, poleId, date, estimatedHours, points, maxPeople, type, priority, state, referent, recurrenceCount, recurrenceUnit } = await req.json()
 
     if (!title) {
         return NextResponse.json({ message: "Le titre est requis" }, { status: 400 })
@@ -47,6 +47,8 @@ export async function POST(req: NextRequest) {
             priority: priority || null,
             state: state ?? "ACTIVE",
             referent: referent || null,
+            recurrenceCount: recurrenceCount ? parseInt(recurrenceCount) : null,
+            recurrenceUnit: recurrenceUnit || null,
         }
     })
 

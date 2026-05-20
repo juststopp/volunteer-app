@@ -25,7 +25,8 @@ export async function GET() {
                 realisations: {
                     include: {
                         user: { select: { id: true, firstname: true, lastname: true } }
-                    }
+                    },
+                    orderBy: { participatedAt: "desc" }
                 },
             },
             orderBy: { date: "asc" }

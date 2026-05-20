@@ -92,7 +92,7 @@ export function PasswordResetForm() {
           <div className="text-center">
             <Link
               href="/auth/forgot-password"
-              className="text-blue-600 hover:underline"
+              className="text-[#0A9696] hover:text-[#004F4F] hover:underline"
             >
               Demander un nouveau lien
             </Link>
@@ -205,7 +205,7 @@ export function PasswordResetForm() {
         </form>
 
         <div className="mt-4 text-center text-sm">
-          <Link href="/auth/signin" className="text-blue-600 hover:underline">
+          <Link href="/auth/signin" className="text-[#0A9696] hover:text-[#004F4F] hover:underline">
             Retour à la connexion
           </Link>
         </div>

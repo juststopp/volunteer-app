@@ -54,6 +54,8 @@ export async function PATCH(
             priority: body.priority || null,
             state: body.state,
             referent: body.referent || null,
+            recurrenceCount: body.recurrenceCount ? parseInt(body.recurrenceCount) : null,
+            recurrenceUnit: body.recurrenceUnit || null,
         }
     })
 

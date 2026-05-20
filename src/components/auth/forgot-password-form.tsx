@@ -127,13 +127,13 @@ export function ForgotPasswordForm() {
         <div className="mt-4 text-center text-sm space-y-2">
           <div>
             Vous vous souvenez de votre mot de passe ?{" "}
-            <Link href="/auth/signin" className="text-blue-600 hover:underline">
+            <Link href="/auth/signin" className="text-[#0A9696] hover:text-[#004F4F] hover:underline">
               Se connecter
             </Link>
           </div>
           <div>
             Pas encore de compte ?{" "}
-            <Link href="/auth/signup" className="text-blue-600 hover:underline">
+            <Link href="/auth/signup" className="text-[#0A9696] hover:text-[#004F4F] hover:underline">
               S&apos;inscrire
             </Link>
           </div>

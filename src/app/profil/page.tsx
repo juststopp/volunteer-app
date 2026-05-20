@@ -23,11 +23,26 @@ import {
   Clock,
   Target,
   Users,
+  MessageSquare,
 } from "lucide-react";
 
 import { Navbar } from "@/components/navbar";
 import { MissionDrawer } from "@/components/missions/mission-drawer";
 import { Mission } from "@/types/missions";
+
+type ProfileInscription = Mission & {
+  myInscription?: {
+    availableFrom: string | null;
+    availableDuration: number | null;
+    comment: string | null;
+  };
+};
+
+type ProfileRealisation = Mission & {
+  pointsAwarded: number | null;
+  effectiveDuration: number | null;
+  commentaire: string | null;
+};
 
 interface UserProfile {
   id: string;
@@ -115,7 +130,7 @@ const MissionsSkeleton = ({ title, count = 3 }: { title: string; count?: number 
 );
 
 const getStateColor = (state: string) => {
-  if (state === "ACTIVE") return "bg-blue-100 text-blue-800 border-blue-200";
+  if (state === "ACTIVE") return "bg-[#E0F6F7] text-[#004F4F] border-[#69C3D2]";
   if (state === "CLOSED") return "bg-orange-100 text-orange-800 border-orange-200";
   if (state === "DONE") return "bg-green-100 text-green-800 border-green-200";
   return "bg-gray-100 text-gray-800 border-gray-200";
@@ -137,8 +152,8 @@ export default function ProfilePage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
-  const [inscriptions, setInscriptions] = useState<Mission[]>([]);
-  const [completedMissions, setCompletedMissions] = useState<Mission[]>([]);
+  const [inscriptions, setInscriptions] = useState<ProfileInscription[]>([]);
+  const [completedMissions, setCompletedMissions] = useState<ProfileRealisation[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -147,36 +162,31 @@ export default function ProfilePage() {
     }
   }, [status, router]);
 
-  useEffect(() => {
-    const fetchUserData = async () => {
-      if (session?.user?.id) {
-        try {
-          setLoading(true);
-
-          const userResponse = await fetch(`/api/user/${session.user.id}`);
-          if (!userResponse.ok)
-            throw new Error("Erreur lors du chargement du profil");
-          const userData = await userResponse.json();
-          setUserProfile(userData);
-
-          const missionsResponse = await fetch(`/api/user/${session.user.id}/missions`);
-          if (!missionsResponse.ok)
-            throw new Error("Erreur lors du chargement des missions");
-          const missionsData = await missionsResponse.json();
-
-          setInscriptions(missionsData.inscriptions);
-          setCompletedMissions(missionsData.completed);
-        } catch (error) {
-          console.error("Erreur lors du chargement des données utilisateur:", error);
-        } finally {
-          setLoading(false);
-        }
+  const fetchUserData = async (userId: string) => {
+    try {
+      setLoading(true);
+      const [userResponse, missionsResponse] = await Promise.all([
+        fetch(`/api/user/${userId}`),
+        fetch(`/api/user/${userId}/missions`),
+      ]);
+      if (userResponse.ok) setUserProfile(await userResponse.json());
+      if (missionsResponse.ok) {
+        const data = await missionsResponse.json();
+        setInscriptions(data.inscriptions);
+        setCompletedMissions(data.completed);
       }
-    };
-
-    if (status === "authenticated") {
-      fetchUserData();
+    } catch (error) {
+      console.error("Erreur lors du chargement des données utilisateur:", error);
+    } finally {
+      setLoading(false);
     }
+  };
+
+  useEffect(() => {
+    if (status === "authenticated" && session?.user?.id) {
+      fetchUserData(session.user.id);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session, status]);
 
   const getInitials = (firstname: string, lastname: string) => {
@@ -211,7 +221,7 @@ export default function ProfilePage() {
                   <CardHeader className="text-center">
                     <div className="flex justify-center mb-4">
                       <Avatar className="h-24 w-24">
-                        <AvatarFallback className="bg-blue-100 text-blue-700 text-2xl">
+                        <AvatarFallback className="bg-[#E0F6F7] text-[#004F4F] text-2xl">
                           {getInitials(userProfile.firstname, userProfile.lastname)}
                         </AvatarFallback>
                       </Avatar>
@@ -261,12 +271,12 @@ export default function ProfilePage() {
                     <Separator />
 
                     <div className="grid grid-cols-1 gap-4 text-center">
-                      <div className="p-4 bg-blue-50 rounded-lg">
-                        <Star className="w-6 h-6 text-blue-600 mx-auto mb-2" />
-                        <p className="text-2xl font-bold text-blue-700">
+                      <div className="p-4 bg-[#E0F6F7] rounded-lg">
+                        <Star className="w-6 h-6 text-[#0A9696] mx-auto mb-2" />
+                        <p className="text-2xl font-bold text-[#004F4F]">
                           {userProfile.points}
                         </p>
-                        <p className="text-sm text-blue-600">Points totaux</p>
+                        <p className="text-sm text-[#0A9696]">Points totaux</p>
                       </div>
                     </div>
                   </CardContent>
@@ -300,55 +310,94 @@ export default function ProfilePage() {
                         </div>
                       ) : (
                         <div className="space-y-4">
-                          {inscriptions.map((mission) => (
-                            <MissionDrawer
-                              key={mission.id}
-                              mission={mission}
-                              currentUser={session?.user}
-                            >
-                              <div className="border rounded-lg p-4 hover:bg-gray-50 transition-colors cursor-pointer">
-                                <div className="flex justify-between items-start mb-3">
-                                  <h3 className="font-semibold text-lg line-clamp-1">
-                                    {mission.title}
-                                  </h3>
-                                  <div className="lg:flex hidden gap-2">
-                                    <Badge
-                                      className={getStateColor(mission.state)}
-                                      variant="outline"
-                                    >
+                          {inscriptions.map((mission) => {
+                            const dispo = mission.myInscription;
+                            const otherParticipants = mission.inscriptions?.filter(
+                              (i) => i.userId !== session?.user?.id && i.user
+                            ) ?? [];
+                            return (
+                              <MissionDrawer
+                                key={mission.id}
+                                mission={mission}
+                                currentUser={session?.user}
+                                onRefresh={() => session?.user?.id && fetchUserData(session.user.id)}
+                              >
+                                <div className="border rounded-lg p-4 hover:bg-gray-50 transition-colors cursor-pointer space-y-3">
+                                  {/* Header */}
+                                  <div className="flex justify-between items-start">
+                                    <h3 className="font-semibold text-lg line-clamp-1">{mission.title}</h3>
+                                    <Badge className={getStateColor(mission.state)} variant="outline">
                                       {getStateLabel(mission.state)}
                                     </Badge>
                                   </div>
-                                </div>
 
-                                <p className="text-gray-600 text-sm mb-3 line-clamp-2">
-                                  {mission.description}
-                                </p>
+                                  {/* Description */}
+                                  {mission.description && (
+                                    <p className="text-gray-600 text-sm line-clamp-2">{mission.description}</p>
+                                  )}
 
-                                <div className="flex items-center justify-between text-sm text-gray-500">
-                                  <div className="flex items-center gap-4">
+                                  {/* Date + points + pôle */}
+                                  <div className="flex flex-wrap items-center gap-3 text-sm text-gray-500">
                                     <div className="flex items-center gap-1">
-                                      <Calendar className="w-4 h-4" />
+                                      <Calendar className="w-3.5 h-3.5" />
                                       <span>{formatDate(mission.date)}</span>
                                     </div>
                                     {mission.points > 0 && (
                                       <div className="flex items-center gap-1">
-                                        <Star className="w-4 h-4" />
-                                        <span>{mission.points} pts</span>
+                                        <Star className="w-3.5 h-3.5" />
+                                        <span>{mission.points} pts max</span>
+                                      </div>
+                                    )}
+                                    {mission.pole && (
+                                      <div className="flex items-center gap-1">
+                                        <Target className="w-3.5 h-3.5" />
+                                        <span>{mission.pole.name}</span>
                                       </div>
                                     )}
                                   </div>
 
-                                  {mission.pole && (
-                                    <div className="flex items-center gap-1">
-                                      <Target className="w-4 h-4" />
-                                      <span>{mission.pole.name}</span>
+                                  {/* Ma disponibilité */}
+                                  {(dispo?.availableFrom || dispo?.availableDuration) && (
+                                    <div className="flex items-center gap-2 text-xs bg-[#E0F6F7] text-[#004F4F] rounded-md px-3 py-2">
+                                      <Clock className="w-3.5 h-3.5 shrink-0" />
+                                      <span>
+                                        {dispo.availableFrom
+                                          ? `À partir de ${new Date(dispo.availableFrom).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}`
+                                          : ""}
+                                        {dispo.availableFrom && dispo.availableDuration ? " · " : ""}
+                                        {dispo.availableDuration ? `pendant ${dispo.availableDuration}h` : ""}
+                                      </span>
+                                    </div>
+                                  )}
+
+                                  {/* Mon commentaire */}
+                                  {dispo?.comment && (
+                                    <div className="flex items-start gap-2 text-xs text-gray-500 italic">
+                                      <MessageSquare className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                                      <span>&ldquo;{dispo.comment}&rdquo;</span>
+                                    </div>
+                                  )}
+
+                                  {/* Autres inscrits */}
+                                  {otherParticipants.length > 0 && (
+                                    <div className="flex items-center gap-2 flex-wrap pt-1 border-t border-gray-100">
+                                      <span className="text-xs text-gray-400 flex items-center gap-1">
+                                        <Users className="w-3 h-3" /> Aussi inscrits :
+                                      </span>
+                                      {otherParticipants.map((i) => (
+                                        <span
+                                          key={i.id}
+                                          className="text-xs bg-gray-100 text-gray-700 rounded-full px-2 py-0.5"
+                                        >
+                                          {i.user!.firstname} {i.user!.lastname}
+                                        </span>
+                                      ))}
                                     </div>
                                   )}
                                 </div>
-                              </div>
-                            </MissionDrawer>
-                          ))}
+                              </MissionDrawer>
+                            );
+                          })}
                         </div>
                       )}
                     </CardContent>
@@ -373,55 +422,61 @@ export default function ProfilePage() {
                       ) : (
                         <div className="space-y-4">
                           {completedMissions.map((mission) => (
-                            <MissionDrawer
+                            <div
                               key={mission.id}
-                              mission={mission}
-                              currentUser={session?.user}
+                              className="border rounded-lg p-4 bg-green-50 border-green-200 space-y-3"
                             >
-                              <div className="border rounded-lg p-4 bg-green-50 border-green-200 cursor-pointer hover:bg-green-100 transition-colors">
-                                <div className="flex justify-between items-start mb-3">
-                                  <h3 className="font-semibold text-lg line-clamp-1">
-                                    {mission.title}
-                                  </h3>
-                                  <div className="flex gap-2">
-                                    <Badge
-                                      className="bg-green-100 text-green-800 border-green-200"
-                                      variant="outline"
-                                    >
-                                      <CheckCircle2 className="w-3 h-3 mr-1" />
-                                      Terminé
+                              {/* Header */}
+                              <div className="flex justify-between items-start">
+                                <h3 className="font-semibold text-lg line-clamp-1">{mission.title}</h3>
+                                <div className="flex gap-2 shrink-0 ml-2">
+                                  <Badge className="bg-green-100 text-green-800 border-green-200" variant="outline">
+                                    <CheckCircle2 className="w-3 h-3 mr-1" /> Réalisé
+                                  </Badge>
+                                  {(mission.pointsAwarded ?? mission.points) > 0 && (
+                                    <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200" variant="outline">
+                                      <Star className="w-3 h-3 mr-1" />
+                                      +{mission.pointsAwarded ?? mission.points} pts
                                     </Badge>
-                                    {mission.points > 0 && (
-                                      <Badge
-                                        className="bg-yellow-100 text-yellow-800 border-yellow-200"
-                                        variant="outline"
-                                      >
-                                        <Star className="w-3 h-3 mr-1" />+
-                                        {mission.points} pts
-                                      </Badge>
-                                    )}
-                                  </div>
-                                </div>
-
-                                <p className="text-gray-600 text-sm mb-3 line-clamp-2">
-                                  {mission.description}
-                                </p>
-
-                                <div className="flex items-center justify-between text-sm text-gray-500">
-                                  <div className="flex items-center gap-1">
-                                    <Calendar className="w-4 h-4" />
-                                    <span>{formatDate(mission.date)}</span>
-                                  </div>
-
-                                  {mission.pole && (
-                                    <div className="flex items-center gap-1">
-                                      <Target className="w-4 h-4" />
-                                      <span>{mission.pole.name}</span>
-                                    </div>
                                   )}
                                 </div>
                               </div>
-                            </MissionDrawer>
+
+                              {/* Description */}
+                              {mission.description && (
+                                <p className="text-gray-600 text-sm line-clamp-2">{mission.description}</p>
+                              )}
+
+                              {/* Date + pôle */}
+                              <div className="flex flex-wrap items-center gap-3 text-sm text-gray-500">
+                                <div className="flex items-center gap-1">
+                                  <Calendar className="w-3.5 h-3.5" />
+                                  <span>{formatDate(mission.date)}</span>
+                                </div>
+                                {mission.pole && (
+                                  <div className="flex items-center gap-1">
+                                    <Target className="w-3.5 h-3.5" />
+                                    <span>{mission.pole.name}</span>
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* Détails de la réalisation */}
+                              <div className="bg-white/70 rounded-md px-3 py-2 space-y-1.5 text-sm border border-green-100">
+                                {mission.effectiveDuration != null && (
+                                  <div className="flex items-center gap-2 text-gray-700">
+                                    <Clock className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                                    <span>Durée effective : <strong>{mission.effectiveDuration}h</strong></span>
+                                  </div>
+                                )}
+                                {mission.commentaire && (
+                                  <div className="flex items-start gap-2 text-gray-600 italic">
+                                    <MessageSquare className="w-3.5 h-3.5 text-gray-400 shrink-0 mt-0.5" />
+                                    <span>&ldquo;{mission.commentaire}&rdquo;</span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
                           ))}
                         </div>
                       )}

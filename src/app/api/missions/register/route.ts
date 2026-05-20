@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
             )
         }
 
-        const { missionId, comment } = await req.json()
+        const { missionId, comment, availableFrom, availableDuration } = await req.json()
 
         if (!missionId) {
             return NextResponse.json(
@@ -32,6 +32,13 @@ export async function POST(req: NextRequest) {
             return NextResponse.json(
                 { message: "Mission introuvable" },
                 { status: 404 }
+            )
+        }
+
+        if (mission.state !== "ACTIVE") {
+            return NextResponse.json(
+                { message: "Les inscriptions sont fermées pour cette mission" },
+                { status: 400 }
             )
         }
 
@@ -53,7 +60,9 @@ export async function POST(req: NextRequest) {
             data: {
                 userId: session.user.id,
                 missionId,
-                comment: comment || null
+                comment: comment || null,
+                availableFrom: availableFrom ? new Date(availableFrom) : null,
+                availableDuration: availableDuration ? parseFloat(availableDuration) : null,
             }
         })
 

@@ -27,7 +27,17 @@ export async function GET(
             prisma.inscription.findMany({
                 where: { userId },
                 include: {
-                    mission: { include: { pole: true } }
+                    mission: {
+                        include: {
+                            pole: true,
+                            // Tous les inscrits à la mission (pour afficher les autres participants)
+                            inscriptions: {
+                                include: {
+                                    user: { select: { id: true, firstname: true, lastname: true } }
+                                }
+                            }
+                        }
+                    }
                 },
                 orderBy: { createdAt: 'desc' }
             }),
@@ -45,8 +55,24 @@ export async function GET(
         return NextResponse.json({
             inscriptions: inscriptions
                 .filter(i => !completedMissionIds.has(i.missionId))
-                .map(i => i.mission),
-            completed: realisations.map(r => r.mission),
+                .map(i => ({
+                    ...i.mission,
+                    realisations: [],
+                    // Détails de l'inscription de l'utilisateur (dispo + commentaire)
+                    myInscription: {
+                        availableFrom: i.availableFrom,
+                        availableDuration: i.availableDuration,
+                        comment: i.comment,
+                    },
+                })),
+            completed: realisations.map(r => ({
+                ...r.mission,
+                inscriptions: [{ id: `i-${r.id}`, userId: r.userId, missionId: r.missionId }],
+                realisations: [{ id: r.id, userId: r.userId, missionId: r.missionId }],
+                pointsAwarded: r.pointsAwarded,
+                effectiveDuration: r.effectiveDuration,
+                commentaire: r.commentaire,
+            })),
         });
     } catch (error) {
         console.error('Erreur lors de la récupération des missions:', error);

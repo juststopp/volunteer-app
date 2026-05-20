@@ -32,8 +32,8 @@ export default function AdminDashboard() {
                   sub: `${stats.pendingUsers} en attente de validation`,
                   icon: Users,
                   href: "/admin/utilisateurs",
-                  color: "text-blue-600",
-                  bg: "bg-blue-50",
+                  color: "text-[#0A9696]",
+                  bg: "bg-[#E0F6F7]",
               },
               {
                   label: "Missions",
@@ -75,8 +75,8 @@ export default function AdminDashboard() {
         : [];
 
     return (
-        <div className="p-8">
-            <div className="mb-8">
+        <div className="p-4 sm:p-8">
+            <div className="mb-6 sm:mb-8">
                 <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
                 <p className="text-gray-500 mt-1">Vue d&apos;ensemble de l&apos;application</p>
             </div>

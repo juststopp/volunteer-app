@@ -7,7 +7,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Users, Target, Calendar } from "lucide-react";
+import { Users, Target, Calendar, RefreshCw } from "lucide-react";
 import { Session } from "next-auth";
 import { MissionDrawer } from "@/components/missions/mission-drawer";
 import ReactMarkdown from "react-markdown";
@@ -18,7 +18,7 @@ interface MissionCardProps {
 }
 
 const getStateColor = (state: string) => {
-  if (state === "ACTIVE") return "bg-blue-100 text-blue-800 border-blue-200";
+  if (state === "ACTIVE") return "bg-[#E0F6F7] text-[#004F4F] border-[#69C3D2]";
   if (state === "CLOSED") return "bg-orange-100 text-orange-800 border-orange-200";
   if (state === "DONE") return "bg-green-100 text-green-800 border-green-200";
   return "bg-gray-100 text-gray-800 border-gray-200";
@@ -71,18 +71,31 @@ export function MissionCard({ mission, currentUser }: MissionCardProps) {
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="flex items-center justify-between text-sm text-gray-600">
-            {mission.date && (
+            {mission.type === "Récurrente" ? (
+              <div className="flex items-center gap-1 text-[#0A9696]">
+                <RefreshCw className="w-4 h-4" />
+                <span className="font-medium text-sm">
+                  {mission.recurrenceCount && mission.recurrenceUnit
+                    ? `${mission.recurrenceCount}× / ${mission.recurrenceUnit}`
+                    : "Récurrente"}
+                </span>
+              </div>
+            ) : mission.date ? (
               <div className="flex items-center">
                 <Calendar className="w-4 h-4 mr-2" />
                 <span>{formatDateShort(mission.date)}</span>
               </div>
-            )}
+            ) : <div />}
 
             <div className="flex items-center">
-              <Users className="w-4 h-4 mr-2" />
-              <span>
-                {mission.inscriptions.length}/{mission.maxPeople ?? "∞"}
-              </span>
+              {mission.type === "Récurrente" ? (
+                <span className="text-xs text-gray-500">{mission.realisations?.length ?? 0} participation{(mission.realisations?.length ?? 0) !== 1 ? "s" : ""}</span>
+              ) : (
+                <>
+                  <Users className="w-4 h-4 mr-2" />
+                  <span>{mission.inscriptions?.length ?? 0}/{mission.maxPeople ?? "∞"}</span>
+                </>
+              )}
             </div>
           </div>
 

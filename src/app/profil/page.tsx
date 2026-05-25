@@ -24,7 +24,19 @@ import {
   Target,
   Users,
   MessageSquare,
+  Pencil,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 import { Navbar } from "@/components/navbar";
 import { MissionDrawer } from "@/components/missions/mission-drawer";
@@ -156,6 +168,12 @@ export default function ProfilePage() {
   const [completedMissions, setCompletedMissions] = useState<ProfileRealisation[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Édition du profil
+  const [editOpen, setEditOpen] = useState(false);
+  const [editForm, setEditForm] = useState({ firstname: "", lastname: "", email: "", phone: "" });
+  const [editSaving, setEditSaving] = useState(false);
+  const [editError, setEditError] = useState("");
+
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/auth/signin");
@@ -191,6 +209,50 @@ export default function ProfilePage() {
 
   const getInitials = (firstname: string, lastname: string) => {
     return (firstname[0] + lastname[0]).toUpperCase();
+  };
+
+  const openEditDialog = () => {
+    if (!userProfile) return;
+    setEditForm({
+      firstname: userProfile.firstname,
+      lastname: userProfile.lastname,
+      email: userProfile.email,
+      phone: userProfile.phone ?? "",
+    });
+    setEditError("");
+    setEditOpen(true);
+  };
+
+  const handleSaveProfile = async () => {
+    if (!session?.user?.id) return;
+    setEditError("");
+    if (!editForm.firstname.trim() || !editForm.lastname.trim()) {
+      setEditError("Le prénom et le nom sont requis.");
+      return;
+    }
+    if (!editForm.email.trim()) {
+      setEditError("L'email est requis.");
+      return;
+    }
+    setEditSaving(true);
+    try {
+      const res = await fetch(`/api/user/${session.user.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(editForm),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setUserProfile((p) => p ? { ...p, ...data } : p);
+        setEditOpen(false);
+      } else {
+        setEditError(data.error ?? "Erreur lors de la mise à jour.");
+      }
+    } catch {
+      setEditError("Erreur réseau.");
+    } finally {
+      setEditSaving(false);
+    }
   };
 
   if (status === "loading") {
@@ -230,6 +292,14 @@ export default function ProfilePage() {
                       {userProfile.firstname} {userProfile.lastname}
                     </CardTitle>
                     <CardDescription>Membre TRIBU</CardDescription>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="mt-2 text-xs text-[#0A9696] border-[#69C3D2] hover:bg-[#E0F6F7]"
+                      onClick={openEditDialog}
+                    >
+                      <Pencil className="w-3 h-3 mr-1.5" /> Modifier mon profil
+                    </Button>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="flex items-center gap-3">
@@ -282,6 +352,76 @@ export default function ProfilePage() {
                   </CardContent>
                 </Card>
               )}
+
+              {/* Dialog modification du profil */}
+              <Dialog open={editOpen} onOpenChange={setEditOpen}>
+                <DialogContent className="w-[calc(100vw-2rem)] max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Modifier mon profil</DialogTitle>
+                    <DialogDescription>
+                      Mettez à jour vos informations personnelles.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="grid gap-4 py-2">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="grid gap-1.5">
+                        <Label htmlFor="edit-firstname">Prénom *</Label>
+                        <Input
+                          id="edit-firstname"
+                          value={editForm.firstname}
+                          onChange={(e) => setEditForm((f) => ({ ...f, firstname: e.target.value }))}
+                          placeholder="Prénom"
+                        />
+                      </div>
+                      <div className="grid gap-1.5">
+                        <Label htmlFor="edit-lastname">Nom *</Label>
+                        <Input
+                          id="edit-lastname"
+                          value={editForm.lastname}
+                          onChange={(e) => setEditForm((f) => ({ ...f, lastname: e.target.value }))}
+                          placeholder="Nom"
+                        />
+                      </div>
+                    </div>
+                    <div className="grid gap-1.5">
+                      <Label htmlFor="edit-email">Email *</Label>
+                      <Input
+                        id="edit-email"
+                        type="email"
+                        value={editForm.email}
+                        onChange={(e) => setEditForm((f) => ({ ...f, email: e.target.value }))}
+                        placeholder="adresse@email.com"
+                      />
+                    </div>
+                    <div className="grid gap-1.5">
+                      <Label htmlFor="edit-phone">Téléphone</Label>
+                      <Input
+                        id="edit-phone"
+                        type="tel"
+                        value={editForm.phone}
+                        onChange={(e) => setEditForm((f) => ({ ...f, phone: e.target.value }))}
+                        placeholder="06 12 34 56 78"
+                      />
+                    </div>
+                    {editError && (
+                      <p className="text-sm text-red-600">{editError}</p>
+                    )}
+                  </div>
+                  <DialogFooter>
+                    <Button variant="outline" onClick={() => setEditOpen(false)}>
+                      Annuler
+                    </Button>
+                    <Button
+                      onClick={handleSaveProfile}
+                      disabled={editSaving}
+                      style={{ backgroundColor: "#0A9696" }}
+                      className="hover:opacity-90"
+                    >
+                      {editSaving ? "Enregistrement..." : "Enregistrer"}
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
             </div>
 
             <div className="lg:col-span-2 space-y-8">

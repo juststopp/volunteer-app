@@ -158,23 +158,19 @@ export async function PATCH(
     if (completed) {
         const pts = (customPoints != null && customPoints >= 0) ? customPoints : mission.points
 
-        const existing = await prisma.realisation.findUnique({
-            where: { userId_missionId: { userId, missionId } },
-            select: { pointsAwarded: true }
+        const existing = await prisma.realisation.findFirst({
+            where: { userId, missionId },
+            select: { id: true, pointsAwarded: true }
         })
 
         if (existing) {
             const diff = pts - (existing.pointsAwarded ?? mission.points)
-            await prisma.$transaction([
-                prisma.realisation.update({
-                    where: { userId_missionId: { userId, missionId } },
-                    data: { pointsAwarded: pts }
-                }),
-                ...(diff !== 0 ? [prisma.user.update({
-                    where: { id: userId },
-                    data: { points: { increment: diff } }
-                })] : [])
-            ])
+            await prisma.$transaction(async (tx) => {
+                await tx.realisation.update({ where: { id: existing.id }, data: { pointsAwarded: pts } })
+                if (diff !== 0) {
+                    await tx.user.update({ where: { id: userId }, data: { points: { increment: diff } } })
+                }
+            })
             return NextResponse.json({ message: "Points modifiés", pointsAwarded: pts })
         }
 
@@ -184,29 +180,23 @@ export async function PATCH(
                 prisma.user.update({ where: { id: userId }, data: { points: { increment: pts } } })
             ])
             return NextResponse.json({ message: "Participation validée", pointsAwarded: pts })
-        } catch (error: unknown) {
-            if ((error as { code?: string }).code === "P2002")
-                return NextResponse.json({ message: "Participation déjà validée" }, { status: 400 })
+        } catch {
             return NextResponse.json({ message: "Erreur serveur" }, { status: 500 })
         }
     } else {
-        const existing = await prisma.realisation.findUnique({
-            where: { userId_missionId: { userId, missionId } },
-            select: { pointsAwarded: true }
+        const existing = await prisma.realisation.findFirst({
+            where: { userId, missionId },
+            select: { id: true, pointsAwarded: true }
         })
-        const pointsToDeduct = existing?.pointsAwarded ?? mission.points
-
-        try {
-            await prisma.$transaction([
-                prisma.realisation.delete({ where: { userId_missionId: { userId, missionId } } }),
-                prisma.user.update({
-                    where: { id: userId },
-                    data: { points: { decrement: pointsToDeduct } }
-                })
-            ])
-            return NextResponse.json({ message: "Participation annulée" })
-        } catch {
+        if (!existing)
             return NextResponse.json({ message: "Réalisation introuvable" }, { status: 404 })
-        }
+
+        const pointsToDeduct = existing.pointsAwarded ?? mission.points
+
+        await prisma.$transaction([
+            prisma.realisation.delete({ where: { id: existing.id } }),
+            prisma.user.update({ where: { id: userId }, data: { points: { decrement: pointsToDeduct } } })
+        ])
+        return NextResponse.json({ message: "Participation annulée" })
     }
 }
